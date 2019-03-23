@@ -67,13 +67,54 @@ def pad_image_square_center(image):
     return new_image
 
 
+def batch_preprocess(src_folder, dest_file, final_res, padding):
+    """ Executes the pre-processing pipeline on all images inside the given
+    source folder. The dataset of pre-processed images are saved as a numpy
+    array to the given destination file.
+
+    The source folder should not contain any other files apart from the images
+    to pre-process. The folder name should be of the form 'path/to/folder/'.
+    """
+
+    files = glob.glob(src_folder + '*')
+    num_files = len(files)
+    dataset = np.empty((num_files, final_res*final_res))
+    for row, file in enumerate(files):
+        print('\r{}/{}'.format(row, num_files), end='')
+        im = Image.open(file)
+        im = preprocess_image(im, final_res, padding)
+        dataset[row] = im.reshape((1, -1))
+
+    np.save(dest_file, dataset)
+    print('\rDone!')
+
+
 if __name__ == '__main__':
 
-    # Load the image
-    im = Image.open('data/trainingSet/OfflineSignatures/Dutch/TrainingSet/'
-                    'Offline Genuine/002_01.PNG')
+    final_res = 256
+    padding = True
 
-    # Preprocess the image
-    r = preprocess_image(im, padding=True, plot=True)
+    # Offline train genuine
+    src_folder = 'data/raw/trainingSet/OfflineSignatures/Dutch/TrainingSet/' \
+                 'Offline Genuine/'
+    batch_preprocess(
+        src_folder,
+        'data/clean/train-dutch-offline-genuine.npz',
+        final_res,
+        padding)
+
+    # Offline train forgeries
+    src_folder = 'data/raw/trainingSet/OfflineSignatures/Dutch/TrainingSet/' \
+                 'Offline Forgeries/'
+    batch_preprocess(
+        src_folder,
+        'data/clean/train-dutch-offline-forgeries.npz',
+        final_res,
+        padding)
+
+
+
+
+
 
 
