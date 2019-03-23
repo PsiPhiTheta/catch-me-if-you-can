@@ -86,7 +86,7 @@ def batch_preprocess(src_folder, dest_file, final_res, padding):
         dataset[row] = im.reshape((1, -1))
 
     np.save(dest_file, dataset)
-    print('\rDone!')
+    print('\rDone!' + ' ' * 10)
 
 
 if __name__ == '__main__':
