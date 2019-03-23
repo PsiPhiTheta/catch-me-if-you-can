@@ -16,7 +16,7 @@ def sampling(args):
 
 
 # VAE loss = mse_loss (reconstruction) + kl_loss
-def vae_loss(inputs, outputs, original_dim, z_mean, z_log_var) :
+def vae_loss(inputs, outputs, original_dim, z_mean, z_log_var):
     reconstruction_loss = mse(inputs, outputs) * original_dim
     kl_loss =  1 + z_log_var - K.square(z_mean) - K.exp(z_log_var)
     kl_loss = K.sum(kl_loss, axis=1)
@@ -73,4 +73,4 @@ vae.fit(x_train,
         epochs=epochs,
         batch_size=batch_size,
         validation_data=(x_test, None))
-vae.save_weights('vae_mnist.h5')
+vae.save_weights('saved-networks/mnist-vae.h5')

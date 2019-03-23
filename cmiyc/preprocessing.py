@@ -5,6 +5,8 @@ import glob
 from scipy.stats import mode
 from PIL import Image, ImageFilter
 
+PATH_TRAIN_GENUINE = 'data/clean/train-dutch-offline-genuine.npy'
+PATH_TRAIN_FORGERIES = 'data/clean/train-dutch-offline-forgeries.npy'
 
 def preprocess_image(image, final_res=256, padding=False, plot=False):
     """ Pre-process a single image.
@@ -99,7 +101,7 @@ if __name__ == '__main__':
                  'Offline Genuine/'
     batch_preprocess(
         src_folder,
-        'data/clean/train-dutch-offline-genuine.npz',
+        PATH_TRAIN_GENUINE,
         final_res,
         padding)
 
@@ -108,7 +110,7 @@ if __name__ == '__main__':
                  'Offline Forgeries/'
     batch_preprocess(
         src_folder,
-        'data/clean/train-dutch-offline-forgeries.npz',
+        PATH_TRAIN_FORGERIES,
         final_res,
         padding)
 
