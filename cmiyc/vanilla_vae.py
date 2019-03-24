@@ -1,3 +1,5 @@
+import os
+
 from keras.models import Model
 from keras.layers import Input, Dense, Lambda
 from keras.losses import mse
@@ -70,6 +72,18 @@ class VanillaVae():
         if save_path:
             self.vae.save_weights(save_path)
 
+    def load_weights(self, weight_path):
+        """
+        Load weights from previous training.
+        """
+        self.vae.load_weights(weight_path)
+
+    def predict(self, processed_img):
+        """
+        Take in an preprocessed image file, run through net, and return output.
+        """
+        self.vae.predict(processed_img)
+
 
 if __name__ == '__main__':
 
@@ -94,11 +108,15 @@ if __name__ == '__main__':
     # Instantiate network
     vanilla_vae = VanillaVae(image_res*image_res, intermediate_dim, latent_dim)
 
+    save_dir = 'saved-networks/'
+    if not os.path.exists(save_dir):
+        os.makedirs(save_dir)
+
     # Train network and save weights
     vanilla_vae.fit(x_train,
                     x_val,
                     epochs,
                     batch_size,
-                    'saved-networks/vanilla-vae.h5')
+                    save_dir + 'vanilla-vae.h5')
 
 
