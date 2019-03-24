@@ -10,7 +10,6 @@ import numpy as np
 
 import dataset_utils
 
-
 class VanillaVae():
     def __init__(self, input_dim, intermediate_dim, latent_dim):
 
@@ -83,7 +82,7 @@ class VanillaVae():
         """
         Take in an preprocessed image file, run through net, and return output.
         """
-        self.vae.predict(processed_img)
+        return self.vae.predict(processed_img)
 
 
 if __name__ == '__main__':
@@ -93,11 +92,11 @@ if __name__ == '__main__':
     intermediate_dim = 256
     latent_dim = 64
     val_frac = 0.1
-    epochs = 1
+    epochs = 100
     batch_size = 16
 
     # Load data
-    x_train, _ = dataset_utils.load_clean_train()
+    x_train, _ = dataset_utils.load_clean_train(sig_type='genuine')
 
     # Shuffle and split for validation
     idx_shuffle = np.array(range(len(x_train)))
@@ -119,6 +118,6 @@ if __name__ == '__main__':
                     x_val,
                     epochs,
                     batch_size,
-                    save_dir + 'vanilla-vae.h5')
+                    save_dir + 'vanilla-vae-real-only.h5')
     print("Total train time: {0:.2f} sec".format(time.time() - start))
 
