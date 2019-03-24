@@ -1,4 +1,5 @@
 import os
+import time
 
 from keras.models import Model
 from keras.layers import Input, Dense, Lambda
@@ -92,7 +93,7 @@ if __name__ == '__main__':
     intermediate_dim = 256
     latent_dim = 64
     val_frac = 0.1
-    epochs = 100
+    epochs = 1
     batch_size = 16
 
     # Load data
@@ -113,10 +114,11 @@ if __name__ == '__main__':
         os.makedirs(save_dir)
 
     # Train network and save weights
+    start = time.time()
     vanilla_vae.fit(x_train,
                     x_val,
                     epochs,
                     batch_size,
                     save_dir + 'vanilla-vae.h5')
-
+    print("Total train time: {0:.2f} sec".format(time.time() - start))
 
