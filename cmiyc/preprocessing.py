@@ -55,7 +55,7 @@ def preprocess_image(image, final_res=256, padding=False, plot=False):
         plt.show()
 
     # Convert to numpy array
-    return np.array(image.getdata()).reshape((final_res, final_res))
+    return np.array(image.getdata()).reshape((final_res, final_res)) / 255
 
 
 def pad_image_square_center(image):
@@ -93,7 +93,7 @@ def batch_preprocess(src_folder, dest_file, final_res, padding):
 
 if __name__ == '__main__':
 
-    final_res = 256
+    final_res = 128
     padding = True
 
     # Offline train genuine
