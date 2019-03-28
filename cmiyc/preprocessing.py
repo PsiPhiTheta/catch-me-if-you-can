@@ -5,6 +5,11 @@ import glob
 from scipy.stats import mode
 from PIL import Image, ImageFilter
 
+<<<<<<< HEAD
+=======
+PATH_TRAIN_GENUINE = 'data/clean/train-dutch-offline-genuine.npy'
+PATH_TRAIN_FORGERIES = 'data/clean/train-dutch-offline-forgeries.npy'
+>>>>>>> antoine
 
 def preprocess_image(image, final_res=256, padding=False, plot=False):
     """ Pre-process a single image.
@@ -53,7 +58,11 @@ def preprocess_image(image, final_res=256, padding=False, plot=False):
         plt.show()
 
     # Convert to numpy array
+<<<<<<< HEAD
     return np.array(image.getdata()).reshape((final_res, final_res))
+=======
+    return np.array(image.getdata()).reshape((final_res, final_res)) / 255
+>>>>>>> antoine
 
 
 def pad_image_square_center(image):
@@ -67,6 +76,7 @@ def pad_image_square_center(image):
     return new_image
 
 
+<<<<<<< HEAD
 if __name__ == '__main__':
 
     # Load the image
@@ -75,5 +85,56 @@ if __name__ == '__main__':
 
     # Preprocess the image
     r = preprocess_image(im, padding=True, plot=True)
+=======
+def batch_preprocess(src_folder, dest_file, final_res, padding):
+    """ Executes the pre-processing pipeline on all images inside the given
+    source folder. The dataset of pre-processed images are saved as a numpy
+    array to the given destination file.
+
+    The source folder should not contain any other files apart from the images
+    to pre-process. The folder name should be of the form 'path/to/folder/'.
+    """
+
+    files = glob.glob(src_folder + '*')
+    num_files = len(files)
+    dataset = np.empty((num_files, final_res*final_res))
+    for row, file in enumerate(files):
+        print('\r{}/{}'.format(row, num_files), end='')
+        im = Image.open(file)
+        im = preprocess_image(im, final_res, padding)
+        dataset[row] = im.reshape((1, -1))
+
+    np.save(dest_file, dataset)
+    print('\rDone!' + ' ' * 10)
+
+
+if __name__ == '__main__':
+
+    final_res = 128
+    padding = True
+
+    # Offline train genuine
+    src_folder = 'data/raw/trainingSet/OfflineSignatures/Dutch/TrainingSet/' \
+                 'Offline Genuine/'
+    batch_preprocess(
+        src_folder,
+        PATH_TRAIN_GENUINE,
+        final_res,
+        padding)
+
+    # Offline train forgeries
+    src_folder = 'data/raw/trainingSet/OfflineSignatures/Dutch/TrainingSet/' \
+                 'Offline Forgeries/'
+    batch_preprocess(
+        src_folder,
+        PATH_TRAIN_FORGERIES,
+        final_res,
+        padding)
+
+
+
+
+
+>>>>>>> antoine
 
 
