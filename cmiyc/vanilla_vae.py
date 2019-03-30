@@ -75,7 +75,7 @@ class VanillaVae():
         ] if save_dir else []
 
         start = time.time()
-        self.vae.fit(x_train,
+        history = self.vae.fit(x_train,
                      epochs=epochs,
                      batch_size=batch_size,
                      validation_split=val_split,
