@@ -16,9 +16,9 @@ def sampling(args):
 
 
 # VAE loss = mse_loss (reconstruction) + kl_loss
-def vae_loss(inputs, outputs, z_mean, z_log_var):
-    reconstruction_loss = mse(inputs, outputs)
-    kl_loss = 1 + z_log_var - K.square(z_mean) - K.exp(z_log_var)
+def vae_loss(inputs, outputs, original_dim, z_mean, z_log_var) :
+    reconstruction_loss = mse(inputs, outputs) * original_dim
+    kl_loss =  1 + z_log_var - K.square(z_mean) - K.exp(z_log_var)
     kl_loss = K.sum(kl_loss, axis=1)
     kl_loss = -0.5 * kl_loss
     return K.mean(reconstruction_loss + kl_loss)
@@ -29,7 +29,7 @@ original_dim = 784
 intermediate_dim = 255
 latent_dim = 3
 
-batch_size = 256
+batch_size = 128
 epochs = 50
 
 
@@ -58,7 +58,7 @@ vae_outputs = decoder(encoder(inputs)[2])
 vae = Model(inputs, vae_outputs)
 
 # Setup and compile
-vae.add_loss(vae_loss(inputs, vae_outputs, z_mean, z_log_var))
+vae.add_loss(vae_loss(inputs, vae_outputs, original_dim, z_mean, z_log_var))
 vae.compile(optimizer='adam')
 
 # MNIST dataset
@@ -73,4 +73,4 @@ vae.fit(x_train,
         epochs=epochs,
         batch_size=batch_size,
         validation_data=(x_test, None))
-vae.save_weights('saved-models/mnist-vae.h5')
+vae.save_weights('vae_mnist.h5')
