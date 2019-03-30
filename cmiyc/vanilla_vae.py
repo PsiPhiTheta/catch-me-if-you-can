@@ -69,24 +69,25 @@ class VanillaVae():
         """
 
         # Setup checkpoint to save best model
-        checkpoint = ModelCheckpoint(save_path,
-                                     monitor='val_loss',
-                                     verbose=1,
-                                     save_best_only=True)
+        callbacks = [
+            ModelCheckpoint(save_dir, monitor='val_loss', verbose=1,
+                            save_best_only=True)
+        ] if save_dir else []
+
         start = time.time()
-        vae.fit(x_train,
-                epochs=epochs,
-                batch_size=batch_size,
-                validation_split=val_split,
-                shuffle=True,
-                callbacks=[checkpoint],
-                verbose=1)
+        self.vae.fit(x_train,
+                     epochs=epochs,
+                     batch_size=batch_size,
+                     validation_split=val_split,
+                     shuffle=True,
+                     callbacks=callbacks,
+                     verbose=1)
         print("Total train time: {0:.2f} sec".format(time.time() - start))
 
-        if save_path:
+        if save_dir:
             if not os.path.exists(save_dir):
                 os.makedirs(save_dir)
-            self.vae.save_weights(save_path)
+            self.vae.save_weights(save_dir)
 
     def load_weights(self, weight_path):
         """
@@ -100,57 +101,12 @@ class VanillaVae():
         """
         return self.vae.predict(processed_img)
 
-# Parameters
-image_res = 128
-input_dim = image_res * image_res
-intermediate_dim = 1024
-latent_dim = 64
-
-validation_split = 0.1
-epochs = 100
-batch_size = 16
-
-save_path = 'saved-models/vanilla-vae.h5'
-
-
-def define_model():
-
-    # Encoder
-    inputs = Input(shape=(input_dim,))
-    h = Dense(intermediate_dim, activation='relu')(inputs)
-    z_mean = Dense(latent_dim)(h)
-    z_log_var = Dense(latent_dim)(h)
-
-    # Latent space
-    z = Lambda(sampling, output_shape=(latent_dim,))([z_mean, z_log_var])
-
-    # Instantiate encoder
-    encoder = Model(inputs, [z_mean, z_log_var, z])
-
-    # Decoder
-    decoder_inputs = Input(shape=(latent_dim,))
-    decoder_h = Dense(intermediate_dim, activation='relu')(decoder_inputs)
-    outputs = Dense(input_dim, activation='sigmoid')(decoder_h)
-
-    # Instantiate decoder
-    decoder = Model(decoder_inputs, outputs)
-
-    # Instantiate VAE
-    vae_outputs = decoder(encoder(inputs)[2])
-    vae = Model(inputs, vae_outputs)
-
-    # Setup and compile
-    vae.add_loss(vae_loss(inputs, vae_outputs, z_mean, z_log_var))
-    vae.compile(optimizer='adam')
-
-    return encoder, decoder, vae
-
-
-def generate_from_random(vae, decoder, latent_dim, image_res):
-    vae = vae.load_weights(save_path)
-    sample = np.random.normal(size=(1, latent_dim))
-    output = decoder.predict(sample).reshape((image_res, image_res))
-    plt.imshow(output, cmap='gray')
+    def generate_from_random(self):
+        """
+        Samples form the latent space and return a generated output.
+        """
+        sample = np.random.normal(size=(1, latent_dim))
+        return self.decoder.predict(sample).reshape((image_res, image_res))
 
 
 if __name__ == '__main__':

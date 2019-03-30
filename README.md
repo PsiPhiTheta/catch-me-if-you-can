@@ -10,7 +10,7 @@ conda activate cmiyc-dev
 ```
 
 ## Data
-The data used in this project comes from the dataset used in the CDAR 2011 Signature Verification Competition (SigComp2011). You should place the directory structure in `cmiyc/data/raw/`
+The data used in this project comes from the [dataset](http://www.iapr-tc11.org/mediawiki/index.php/ICDAR_2011_Signature_Verification_Competition_(SigComp2011) used in the CDAR 2011 Signature Verification Competition (SigComp2011). You should place the directory structure in `cmiyc/data/raw/`
 
 The testing data can be preprocessed simply by executing the `preprocessing.py` script:
 ```bash
