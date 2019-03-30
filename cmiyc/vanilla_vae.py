@@ -3,7 +3,7 @@ import time
 
 from keras.models import Model
 from keras.layers import Input, Dense, Lambda
-from keras.losses import binary_crossentropy
+from keras.losses import binary_crossentropy, mse
 from keras.callbacks import ModelCheckpoint
 import keras.backend as K
 import numpy as np
