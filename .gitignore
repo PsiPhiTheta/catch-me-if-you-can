@@ -1,7 +1,4 @@
 .idea
-<<<<<<< HEAD
 cmiyc/data
-=======
-cmiyc/data/
->>>>>>> antoine
+cmiyc/saved-models
 log_antoine.md
