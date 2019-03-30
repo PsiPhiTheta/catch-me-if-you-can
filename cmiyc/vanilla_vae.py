@@ -137,7 +137,7 @@ if __name__ == '__main__':
     vanilla_vae = VanillaVae(image_res*image_res, intermediate_dim, latent_dim)
 
     # Train
-    vanilla_vae.fit(x_train, 0.1, epochs, batch_size, save_dir)
+    history = vanilla_vae.fit(x_train, 0.1, epochs, batch_size, save_dir)
 
     # Plot the losses after training
     plot_history(history)
