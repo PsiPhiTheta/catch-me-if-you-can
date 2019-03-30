@@ -1,9 +1,12 @@
+import os
 import matplotlib.pyplot as plt
 import numpy as np
 import glob
 
 from scipy.stats import mode
 from PIL import Image, ImageFilter
+
+PATH_SAVE = 'data/clean/'
 
 PATH_TRAIN_GENUINE = 'data/clean/train-dutch-offline-genuine.npy'
 PATH_TRAIN_FORGERIES = 'data/clean/train-dutch-offline-forgeries.npy'
@@ -87,6 +90,9 @@ def batch_preprocess(src_folder, dest_file, final_res, padding):
         im = preprocess_image(im, final_res, padding)
         dataset[row] = im.reshape((1, -1))
 
+    if not os.path.exists(PATH_SAVE):
+        os.makedirs(PATH_SAVE)
+
     np.save(dest_file, dataset)
     print('\rDone!' + ' ' * 10)
 
@@ -113,10 +119,4 @@ if __name__ == '__main__':
         PATH_TRAIN_FORGERIES,
         final_res,
         padding)
-
-
-
-
-
-
 
