@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 
 import dataset_utils
 
+
 class VanillaVae():
     def __init__(self, input_dim, intermediate_dim, latent_dim):
 
@@ -63,14 +64,28 @@ class VanillaVae():
         kl_loss = -0.5 * K.sum(kl_loss, axis=1)
         return K.mean(reconstruction_loss + kl_loss)
 
-    def fit(self, x_train, x_val, epochs, batch_size, save_path=None):
+    def fit(self, x_train, val_split, epochs, batch_size, save_dir=None):
         """ Train the model and save the weights is a `save_path` is set.
         """
-        self.vae.fit(x_train,
-                     epochs=epochs,
-                     batch_size=batch_size,
-                     validation_data=(x_val, None))
+
+        # Setup checkpoint to save best model
+        checkpoint = ModelCheckpoint(save_path,
+                                     monitor='val_loss',
+                                     verbose=1,
+                                     save_best_only=True)
+        start = time.time()
+        vae.fit(x_train,
+                epochs=epochs,
+                batch_size=batch_size,
+                validation_split=val_split,
+                shuffle=True,
+                callbacks=[checkpoint],
+                verbose=1)
+        print("Total train time: {0:.2f} sec".format(time.time() - start))
+
         if save_path:
+            if not os.path.exists(save_dir):
+                os.makedirs(save_dir)
             self.vae.save_weights(save_path)
 
     def load_weights(self, weight_path):
@@ -96,23 +111,6 @@ epochs = 100
 batch_size = 16
 
 save_path = 'saved-models/vanilla-vae.h5'
-
-
-# Reparameterization trick
-def sampling(args):
-    z_mean, z_log_sigma = args
-    batch_size = K.shape(z_mean)[0]
-    latent_dim = K.shape(z_mean)[1]
-    epsilon = K.random_normal(shape=(batch_size, latent_dim))
-    return z_mean + K.exp(z_log_sigma) * epsilon
-
-
-# Define loss function
-def vae_loss(inputs, outputs, z_mean, z_log_var):
-    reconstruction_loss = binary_crossentropy(inputs, outputs)
-    kl_loss = 1 + z_log_var - K.square(z_mean) - K.exp(z_log_var)
-    kl_loss = -0.5 * K.sum(kl_loss, axis=1)
-    return K.mean(reconstruction_loss + kl_loss)
 
 
 def define_model():
@@ -154,32 +152,6 @@ def generate_from_random(vae, decoder, latent_dim, image_res):
     output = decoder.predict(sample).reshape((image_res, image_res))
     plt.imshow(output, cmap='gray')
 
-# Load data
-# from keras.datasets import mnist
-# (x_train, y_train), (x_test, y_test) = mnist.load_data()
-# original_dim = 784
-# x_train = x_train.reshape((-1, original_dim))
-# x_test = x_test.reshape((-1, original_dim))
-# x_train = x_train / 255
-# x_val = x_test / 255
-
-x_train, _ = dataset_utils.load_clean_train()
-# Setup checkpoint to save best model
-
-checkpoint = ModelCheckpoint(save_path,
-                             monitor='val_loss',
-                             verbose=1,
-                             save_best_only=True)
-# Train the model
-_, _, vae = define_model()
-
-vae.fit(x_train,
-        epochs=epochs,
-        batch_size=batch_size,
-        validation_split=validation_split,
-        shuffle=True,
-        callbacks=[checkpoint],
-        verbose=1)
 
 if __name__ == '__main__':
 
@@ -190,29 +162,13 @@ if __name__ == '__main__':
     val_frac = 0.1
     epochs = 100
     batch_size = 16
+    save_dir = 'cmiyc/saved-models/'
 
     # Load data
     x_train, _ = dataset_utils.load_clean_train(sig_type='genuine')
 
-    # Shuffle and split for validation
-    idx_shuffle = np.array(range(len(x_train)))
-    np.random.shuffle(idx_shuffle)
-    val_split = int(val_frac * len(x_train))
-    x_val = x_train[:val_split]
-    x_train = x_train[val_split:]
-
     # Instantiate network
     vanilla_vae = VanillaVae(image_res*image_res, intermediate_dim, latent_dim)
 
-    save_dir = 'saved-networks/'
-    if not os.path.exists(save_dir):
-        os.makedirs(save_dir)
-
-    # Train network and save weights
-    start = time.time()
-    vanilla_vae.fit(x_train,
-                    x_val,
-                    epochs,
-                    batch_size,
-                    save_dir + 'vanilla-vae-real-only.h5')
-    print("Total train time: {0:.2f} sec".format(time.time() - start))
+    # Train
+    vanilla_vae.fit(x_train, 0.1, epochs, batch_size, save_dir)
