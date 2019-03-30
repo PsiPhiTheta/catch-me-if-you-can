@@ -88,6 +88,8 @@ class VanillaVae():
             if not os.path.exists(save_dir):
                 os.makedirs(save_dir)
             self.vae.save_weights(save_dir)
+	
+	return history
 
     def load_weights(self, weight_path):
         """
