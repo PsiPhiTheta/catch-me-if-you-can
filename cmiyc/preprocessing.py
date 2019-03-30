@@ -11,6 +11,7 @@ PATH_SAVE = 'data/clean/'
 PATH_TRAIN_GENUINE = 'data/clean/train-dutch-offline-genuine.npy'
 PATH_TRAIN_FORGERIES = 'data/clean/train-dutch-offline-forgeries.npy'
 
+
 def preprocess_image(image, final_res=256, padding=False, plot=False):
     """ Pre-process a single image.
 
@@ -72,20 +73,56 @@ def pad_image_square_center(image):
     return new_image
 
 
-def batch_preprocess(src_folder, dest_file, final_res, padding):
-    """ Executes the pre-processing pipeline on all images inside the given
-    source folder. The dataset of pre-processed images are saved as a numpy
-    array to the given destination file.
+def fetch_all_raw_genuine():
+    """ Returns a list of all the genuine signature files from the raw data.
+    That includes the train and test files.s
+    """
+
+    # Create list for training set
+    path = 'data/raw/trainingSet/OfflineSignatures/Dutch/TrainingSet/' \
+           'Offline Genuine/'
+    files = glob.glob(path + '*.PNG')
+
+    # Create list for test set
+    path = 'data/raw/Testdata_SigComp2011/SigComp11-Offlinetestset/Dutch/' \
+           'Reference(646)/'
+    files += glob.glob(path + '**/*.*', recursive=True)
+    path = 'data/raw/Testdata_SigComp2011/SigComp11-Offlinetestset/Dutch/' \
+           'Questioned(1287)/'
+    files += glob.glob(path + '**/*_' + '[0-9]' * 3 + '.*', recursive=True)
+    return files
+
+
+def fetch_all_raw_forgeries():
+    """ Returns a list of all the forged signature files from the raw data.
+    That includes the train and test files.
+    """
+
+    # Create list for training set
+    path = 'data/raw/trainingSet/OfflineSignatures/Dutch/TrainingSet/' \
+           'Offline Forgeries/'
+    files = glob.glob(path + '*.png')
+
+    # Create list for test set
+    path = 'data/raw/Testdata_SigComp2011/SigComp11-Offlinetestset/Dutch/' \
+           'Questioned(1287)/'
+    files += glob.glob(path + '**/*_' + '[0-9]'*7 + '.*', recursive=True)
+    return files
+
+
+def batch_preprocess(files_list, dest_file, final_res, padding):
+    """ Executes the pre-processing pipeline on all images listed in the given
+    files list. The dataset of pre-processed images are saved as a numpy array
+    to the given destination file.
 
     The source folder should not contain any other files apart from the images
     to pre-process. The folder name should be of the form 'path/to/folder/'.
     """
 
-    files = glob.glob(src_folder + '*')
-    num_files = len(files)
+    num_files = len(files_list)
     dataset = np.empty((num_files, final_res*final_res))
-    for row, file in enumerate(files):
-        print('\r{}/{}'.format(row, num_files), end='')
+    for row, file in enumerate(files_list):
+        print('\r{}/{}'.format(row+1, num_files), end='')
         im = Image.open(file)
         im = preprocess_image(im, final_res, padding)
         dataset[row] = im.reshape((1, -1))
@@ -94,7 +131,7 @@ def batch_preprocess(src_folder, dest_file, final_res, padding):
         os.makedirs(PATH_SAVE)
 
     np.save(dest_file, dataset)
-    print('\rDone!' + ' ' * 10)
+    print(' - Done!')
 
 
 if __name__ == '__main__':
@@ -102,21 +139,26 @@ if __name__ == '__main__':
     final_res = 128
     padding = True
 
-    # Offline train genuine
-    src_folder = 'data/raw/trainingSet/OfflineSignatures/Dutch/TrainingSet/' \
-                 'Offline Genuine/'
+    # Offline genuine
+    files_list = fetch_all_raw_genuine()
+    n_sig = len(files_list)
     batch_preprocess(
-        src_folder,
+        files_list,
         PATH_TRAIN_GENUINE,
         final_res,
         padding)
 
-    # Offline train forgeries
-    src_folder = 'data/raw/trainingSet/OfflineSignatures/Dutch/TrainingSet/' \
-                 'Offline Forgeries/'
+    # Offline forgeries
+    files_list = fetch_all_raw_forgeries()
+    n_sig += len(files_list)
     batch_preprocess(
-        src_folder,
+        files_list,
         PATH_TRAIN_FORGERIES,
         final_res,
         padding)
 
+    # There should be a total of 362 (train) + 1287 (test questioned)
+    # + 646 (test reference) signatures (2295)
+    message = ('Was expecting to pre-process a total of 2295 images but got {} '
+               'instead'.format(n_sig))
+    assert n_sig == 2295, message
