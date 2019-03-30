@@ -3,15 +3,10 @@ An ML project exploring alternative approaches to signature verification.
 
 ## Setup
 Using Conda, you can create and activate the Python environment like so:
-<<<<<<< HEAD
-```
-conda env create -f environment.yml
-conda activate cmifc-dev
-```
-=======
+
 ```bash
 conda env create -f environment.yml
-conda activate cmifc-dev
+conda activate cmiyc-dev
 ```
 
 ## Data
@@ -25,4 +20,3 @@ python preprocessing.py
 
 This will pre-process all the dutch offline signatures from the test set and save them as two Numpy arrays, one for the genuine and one for the forgeries, in `data/clean/`. 
 
->>>>>>> antoine
