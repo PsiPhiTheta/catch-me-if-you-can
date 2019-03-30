@@ -108,6 +108,16 @@ class VanillaVae():
         sample = np.random.normal(size=(1, latent_dim))
         return self.decoder.predict(sample).reshape((image_res, image_res))
 
+    def plot_history(history):
+    	"""
+        Plots the training and validation losses
+        """
+	    plt.plot(history.history['loss'])
+	    plt.plot(history.history['val_loss'])
+	    plt.title('model loss')
+	    plt.ylabel('loss')
+	    plt.xlabel('epoch')
+	    plt.legend(['train', 'test'], loc='upper left')
 
 if __name__ == '__main__':
 
@@ -128,3 +138,6 @@ if __name__ == '__main__':
 
     # Train
     vanilla_vae.fit(x_train, 0.1, epochs, batch_size, save_dir)
+
+    # Plot the losses after training
+    plot_history(history)
