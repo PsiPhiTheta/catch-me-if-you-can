@@ -45,7 +45,7 @@ datagen = ImageDataGenerator(featurewise_center=False,
 datagen.fit(x_train)
 
 os.makedirs('images')
-for X_batch, y_batch in datagen.flow(X_train, y_train, batch_size=9, save_to_dir='images', save_prefix='aug', save_format='png'):
+for x_batch in datagen.flow(x_train, batch_size=9, save_to_dir='images', save_prefix='aug', save_format='png'):
     # create a grid of 3x3 images
     for i in range(0, 9):
         pyplot.subplot(330 + 1 + i)
