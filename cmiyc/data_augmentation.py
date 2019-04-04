@@ -1,11 +1,10 @@
 import dataset_utils
-import preprocessing as pre
 from keras.preprocessing.image import ImageDataGenerator
 import keras.backend as K
 
 K.set_image_dim_ordering('th')
 
-PATH_SAVE = 'data/augmented/'
+PATH_SAVE = 'data/augmented'
 
 PATH_TRAIN_GENUINE = 'data/augmented/train-dutch-offline-genuine.npy'
 PATH_TRAIN_FORGERIES = 'data/augmented/train-dutch-offline-forgeries.npy'
@@ -17,7 +16,7 @@ if (GENUINE):
 else:
     x_train, _ = dataset_utils.load_clean_train(sig_type='forgery')
 
-x_train = x_train.astype('float32')
+x_train = x_train.reshape(x_train.shape[0], 1, 128, 128).astype('float32')
 
 datagen = ImageDataGenerator(featurewise_center=False,
                              samplewise_center=False,
@@ -44,12 +43,11 @@ datagen = ImageDataGenerator(featurewise_center=False,
 
 datagen.fit(x_train)
 
-os.makedirs('images')
-for X_batch, y_batch in datagen.flow(X_train, y_train, batch_size=9, save_to_dir='images', save_prefix='aug', save_format='png'):
+for x_batch in datagen.flow(x_train, batch_size=9, save_to_dir=PATH_SAVE, save_prefix='aug', save_format='png'):
     # create a grid of 3x3 images
     for i in range(0, 9):
-        pyplot.subplot(330 + 1 + i)
-        pyplot.imshow(X_batch[i].reshape(28, 28), cmap=pyplot.get_cmap('gray'))
+        plt.subplot(330 + 1 + i)
+        plt.imshow(x_batch[i].reshape(128, 128), cmap=plt.get_cmap('gray'))
     # show the plot
-    pyplot.show()
+    plt.show()
     break
