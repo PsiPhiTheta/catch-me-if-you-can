@@ -139,12 +139,15 @@ if __name__ == '__main__':
     # Load data
     x_train, _ = dataset_utils.load_clean_train(sig_type='genuine', sig_id=1)
 
-    #
-    # # Instantiate network
-    # vanilla_vae = VanillaVae(image_res*image_res, intermediate_dim, latent_dim)
-    #
-    # # Train
-    # history = vanilla_vae.fit(x_train, 0.1, epochs, batch_size, save_dir)
-    #
-    # # Plot the losses after training
-    # plot_history(history)
+    # Instantiate network
+    vanilla_vae = VanillaVae(image_res*image_res, intermediate_dim, latent_dim)
+    
+    # Train
+    history = vanilla_vae.fit(x_train, 0.1, epochs, batch_size, save_dir)
+    
+    # Plot the losses after training
+    plot_history(history)
+    
+    # Sample the latent space
+    plt.imshow(vanilla_vae.generate_from_random(), cmap='gray')
+    
