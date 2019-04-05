@@ -22,5 +22,4 @@ def load_clean_train(sig_type='all', sig_id='all'):
     if not sig_id == 'all':
         df = df[df['sig_id'] == sig_id]
 
-    print(df)
     return np.vstack(df['sig'].to_numpy()), df['label'].to_numpy()
