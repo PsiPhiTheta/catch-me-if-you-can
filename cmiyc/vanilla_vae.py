@@ -88,8 +88,7 @@ class VanillaVae():
             if not os.path.exists(save_dir):
                 os.makedirs(save_dir)
             self.vae.save_weights(save_dir)
-	
-	return history
+        return history
 
     def load_weights(self, weight_path):
         """
@@ -110,6 +109,7 @@ class VanillaVae():
         sample = np.random.normal(size=(1, latent_dim))
         return self.decoder.predict(sample).reshape((image_res, image_res))
 
+
 def plot_history(history):
     """
     Plots the training and validation losses
@@ -124,10 +124,11 @@ def plot_history(history):
     plt.xlabel('epoch')
     plt.legend(['train', 'test'], loc='upper left')
 
+
 if __name__ == '__main__':
 
     # Parameters
-    image_res = 256
+    image_res = 128
     intermediate_dim = 256
     latent_dim = 64
     val_frac = 0.1
@@ -136,13 +137,14 @@ if __name__ == '__main__':
     save_dir = 'cmiyc/saved-models/'
 
     # Load data
-    x_train, _ = dataset_utils.load_clean_train(sig_type='genuine')
+    x_train, _ = dataset_utils.load_clean_train(sig_type='genuine', sig_id=1)
 
-    # Instantiate network
-    vanilla_vae = VanillaVae(image_res*image_res, intermediate_dim, latent_dim)
-
-    # Train
-    history = vanilla_vae.fit(x_train, 0.1, epochs, batch_size, save_dir)
-
-    # Plot the losses after training
-    plot_history(history)
+    #
+    # # Instantiate network
+    # vanilla_vae = VanillaVae(image_res*image_res, intermediate_dim, latent_dim)
+    #
+    # # Train
+    # history = vanilla_vae.fit(x_train, 0.1, epochs, batch_size, save_dir)
+    #
+    # # Plot the losses after training
+    # plot_history(history)
