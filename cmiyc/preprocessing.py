@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import glob
+from keras.preprocessing.image import ImageDataGenerator
 
 from scipy.stats import mode
 from PIL import Image, ImageFilter
@@ -172,6 +173,61 @@ def batch_preprocess(files_list, dest_file, final_res, padding):
     dataset.to_pickle(dest_file)
     print(' - Done!')
 
+def batch_preprocess_aug(files_list, dest_file, final_res, padding, aug_size):
+    """ Executes the pre-processing pipeline on all images listed in the given
+    files list. The dataset of pre-processed images are saved as a numpy array
+    to the given destination file.
+
+    The source folder should not contain any other files apart from the images
+    to pre-process. The folder name should be of the form 'path/to/folder/'.
+    """
+
+    num_files = len(files_list)
+    dataset = pd.DataFrame(columns=['label', 'sig_id', 'sig'])
+    for row, file in enumerate(files_list):
+        print('\r{}/{}'.format(row+1, num_files), end='')
+        im = Image.open(file)
+        im = preprocess_image(im, final_res, padding)
+        datagen = ImageDataGenerator(featurewise_center=False,
+                                     samplewise_center=False,
+                                     featurewise_std_normalization=False,
+                                     samplewise_std_normalization=False,
+                                     zca_whitening=False,
+                                     zca_epsilon=1e-06,
+                                     rotation_range=45,  # modify this
+                                     width_shift_range=10.0,  # modify this
+                                     height_shift_range=10.0,  # modify this
+                                     brightness_range=None,
+                                     shear_range=0.0,
+                                     zoom_range=0.1,  # modify this
+                                     channel_shift_range=0.5,  # modify this
+                                     fill_mode='constant',  # specify this depending on the usecase
+                                     cval=1.0,
+                                     horizontal_flip=False,
+                                     vertical_flip=False,
+                                     rescale=1,  # modify this
+                                     preprocessing_function=None,
+                                     data_format=None,
+                                     validation_split=0.0,
+                                     dtype=None)
+        label, sig_id =get_type_and_id_from_file(file)
+        dataset = dataset.append({
+            'label': label,
+            'sig_id': sig_id,
+            'sig': im.reshape(1, -1)},
+            ignore_index=True)
+        for i in range(aug_size):
+            im = datagen.random_transform(im.reshape(1,128,128), seed=None)
+            dataset = dataset.append({
+                'label': label,
+                'sig_id': sig_id,
+                'sig': im.reshape(1, -1)},
+                ignore_index=True)
+
+    if not os.path.exists(PATH_SAVE):
+        os.makedirs(PATH_SAVE)
+    dataset.to_pickle(dest_file)
+    print(' - Done!')
 
 if __name__ == '__main__':
 
@@ -179,4 +235,6 @@ if __name__ == '__main__':
     padding = True
 
     files = fetch_all_raw()
-    batch_preprocess(files, PATH_TRAIN, final_res, padding)
+
+    # batch_preprocess(files, PATH_TRAIN, final_res, padding)
+    batch_preprocess_aug(files, PATH_TRAIN, final_res, padding, aug_size=16)

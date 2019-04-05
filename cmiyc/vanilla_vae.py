@@ -129,12 +129,12 @@ if __name__ == '__main__':
 
     # Parameters
     image_res = 128
-    intermediate_dim = 256
-    latent_dim = 64
+    intermediate_dim = 512
+    latent_dim = 256
     val_frac = 0.1
-    epochs = 100
+    epochs = 5
     batch_size = 16
-    save_dir = 'cmiyc/saved-models/'
+    save_dir = 'saved-models/models.h5'
 
     # Load data
     x_train, _ = dataset_utils.load_clean_train(sig_type='genuine', sig_id=1)
@@ -147,7 +147,6 @@ if __name__ == '__main__':
     
     # Plot the losses after training
     plot_history(history)
-    
+
     # Sample the latent space
     plt.imshow(vanilla_vae.generate_from_random(), cmap='gray')
-    
