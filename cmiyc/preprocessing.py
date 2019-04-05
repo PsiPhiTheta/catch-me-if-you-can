@@ -235,5 +235,6 @@ if __name__ == '__main__':
     padding = True
 
     files = fetch_all_raw()
+
     # batch_preprocess(files, PATH_TRAIN, final_res, padding)
     batch_preprocess_aug(files, PATH_TRAIN, final_res, padding, aug_size=16)
