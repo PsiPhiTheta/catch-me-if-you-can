@@ -1,13 +1,16 @@
 import os
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 import glob
+from keras.preprocessing.image import ImageDataGenerator
 
 from scipy.stats import mode
 from PIL import Image, ImageFilter
 
-PATH_SAVE = 'data/clean/'
 
+PATH_SAVE = 'data/clean/'
+PATH_TRAIN = 'data/clean/train-dutch-offline.pkl'
 PATH_TRAIN_GENUINE = 'data/clean/train-dutch-offline-genuine.npy'
 PATH_TRAIN_FORGERIES = 'data/clean/train-dutch-offline-forgeries.npy'
 
@@ -73,9 +76,42 @@ def pad_image_square_center(image):
     return new_image
 
 
+def fetch_all_raw():
+    """ Returns a list with all the signature files
+    """
+    paths = [
+        'data/raw/trainingSet/OfflineSignatures/Dutch/TrainingSet/Offline Genuine/*.*',
+        'data/raw/trainingSet/OfflineSignatures/Dutch/TrainingSet/Offline Forgeries/*.*',
+        'data/raw/Testdata_SigComp2011/SigComp11-Offlinetestset/Dutch/Reference(646)/**/*.*',
+        'data/raw/Testdata_SigComp2011/SigComp11-Offlinetestset/Dutch/Questioned(1287)/**/*.*'
+    ]
+    files = []
+    for path in paths:
+        files += glob.glob(path, recursive=True)
+    assert len(files) == 2295, 'was expecting 2295 files but got {}'.format(len(files))
+    return files
+
+
+def get_type_and_id_from_file(file_path):
+    """ Given the full file path, return the label and the id,
+    """
+    label, sig_id = -1, -1
+    if 'Genuine' in file_path:
+        label = 1
+        sig_id = int(file_path[-10:-7])
+    elif 'Forgeries' in file_path:
+        label = 0
+        sig_id = int(file_path[-10:-7])
+    else:
+        label = 1 if file_path[-8] == '_' else 0
+        sig_id = int(file_path[-7:-4])
+    assert label != -1 and sig_id != -1
+    return label, sig_id
+
+
 def fetch_all_raw_genuine():
     """ Returns a list of all the genuine signature files from the raw data.
-    That includes the train and test files.s
+    That includes the train and test files.
     """
 
     # Create list for training set
@@ -120,45 +156,84 @@ def batch_preprocess(files_list, dest_file, final_res, padding):
     """
 
     num_files = len(files_list)
-    dataset = np.empty((num_files, final_res*final_res))
+    dataset = pd.DataFrame(columns=['label', 'sig_id', 'sig'])
     for row, file in enumerate(files_list):
         print('\r{}/{}'.format(row+1, num_files), end='')
         im = Image.open(file)
         im = preprocess_image(im, final_res, padding)
-        dataset[row] = im.reshape((1, -1))
+        label, sig_id =get_type_and_id_from_file(file)
+        dataset = dataset.append({
+            'label': label,
+            'sig_id': sig_id,
+            'sig': im.reshape(1, -1)},
+            ignore_index=True)
 
     if not os.path.exists(PATH_SAVE):
         os.makedirs(PATH_SAVE)
-
-    np.save(dest_file, dataset)
+    dataset.to_pickle(dest_file)
     print(' - Done!')
 
+def batch_preprocess_aug(files_list, dest_file, final_res, padding, aug_size):
+    """ Executes the pre-processing pipeline on all images listed in the given
+    files list. The dataset of pre-processed images are saved as a numpy array
+    to the given destination file.
+
+    The source folder should not contain any other files apart from the images
+    to pre-process. The folder name should be of the form 'path/to/folder/'.
+    """
+
+    num_files = len(files_list)
+    dataset = pd.DataFrame(columns=['label', 'sig_id', 'sig'])
+    for row, file in enumerate(files_list):
+        print('\r{}/{}'.format(row+1, num_files), end='')
+        im = Image.open(file)
+        im = preprocess_image(im, final_res, padding)
+        datagen = ImageDataGenerator(featurewise_center=False,
+                                     samplewise_center=False,
+                                     featurewise_std_normalization=False,
+                                     samplewise_std_normalization=False,
+                                     zca_whitening=False,
+                                     zca_epsilon=1e-06,
+                                     rotation_range=45,  # modify this
+                                     width_shift_range=10.0,  # modify this
+                                     height_shift_range=10.0,  # modify this
+                                     brightness_range=None,
+                                     shear_range=0.0,
+                                     zoom_range=0.1,  # modify this
+                                     channel_shift_range=0.5,  # modify this
+                                     fill_mode='constant',  # specify this depending on the usecase
+                                     cval=1.0,
+                                     horizontal_flip=False,
+                                     vertical_flip=False,
+                                     rescale=1,  # modify this
+                                     preprocessing_function=None,
+                                     data_format=None,
+                                     validation_split=0.0,
+                                     dtype=None)
+        label, sig_id =get_type_and_id_from_file(file)
+        dataset = dataset.append({
+            'label': label,
+            'sig_id': sig_id,
+            'sig': im.reshape(1, -1)},
+            ignore_index=True)
+        for i in range(aug_size):
+            im = datagen.random_transform(im.reshape(1,128,128), seed=None)
+            dataset = dataset.append({
+                'label': label,
+                'sig_id': sig_id,
+                'sig': im.reshape(1, -1)},
+                ignore_index=True)
+
+    if not os.path.exists(PATH_SAVE):
+        os.makedirs(PATH_SAVE)
+    dataset.to_pickle(dest_file)
+    print(' - Done!')
 
 if __name__ == '__main__':
 
     final_res = 128
     padding = True
 
-    # Offline genuine
-    files_list = fetch_all_raw_genuine()
-    n_sig = len(files_list)
-    batch_preprocess(
-        files_list,
-        PATH_TRAIN_GENUINE,
-        final_res,
-        padding)
-
-    # Offline forgeries
-    files_list = fetch_all_raw_forgeries()
-    n_sig += len(files_list)
-    batch_preprocess(
-        files_list,
-        PATH_TRAIN_FORGERIES,
-        final_res,
-        padding)
-
-    # There should be a total of 362 (train) + 1287 (test questioned)
-    # + 646 (test reference) signatures (2295)
-    message = ('Was expecting to pre-process a total of 2295 images but got {} '
-               'instead'.format(n_sig))
-    assert n_sig == 2295, message
+    files = fetch_all_raw()
+    # batch_preprocess(files, PATH_TRAIN, final_res, padding)
+    batch_preprocess_aug(files, PATH_TRAIN, final_res, padding, aug_size=16)
