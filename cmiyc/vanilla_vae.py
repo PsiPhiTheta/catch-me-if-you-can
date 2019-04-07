@@ -25,19 +25,17 @@ class VanillaVae():
         args = [z_mean, z_log_var]
         z = Lambda(self.sampling, output_shape=(latent_dim,))(args)
 
-        # Instantiate encoder
-        self.encoder = Model(inputs, [z_mean, z_log_var, z])
+        self.encoder = Model(inputs, z_mean)
 
         # Decoder
         decoder_inputs = Input(shape=(latent_dim,))
         decoder_h = Dense(intermediate_dim, activation='relu')(decoder_inputs)
         outputs = Dense(input_dim, activation='sigmoid')(decoder_h)
 
-        # Instantiate decoder
         self.decoder = Model(decoder_inputs, outputs)
 
-        # Instantiate VAE
-        vae_outputs = self.decoder(self.encoder(inputs)[2])
+        # end-to-end vae
+        vae_outputs = self.decoder(z)
         self.vae = Model(inputs, vae_outputs)
 
         # Setup and compile
@@ -129,24 +127,32 @@ if __name__ == '__main__':
 
     # Parameters
     image_res = 128
-    intermediate_dim = 512
-    latent_dim = 256
+    intermediate_dim = 128
+    latent_dim = 2
     val_frac = 0.1
-    epochs = 5
-    batch_size = 16
+    epochs = 10
+    batch_size = 32
     save_dir = 'saved-models/models.h5'
 
     # Load data
-    x_train, _ = dataset_utils.load_clean_train(sig_type='genuine', sig_id=1)
+    x_train, y_train = dataset_utils.load_clean_train(sig_type='genuine',
+                                                      sig_id='all',
+                                                      id_as_label=True)
 
     # Instantiate network
     vanilla_vae = VanillaVae(image_res*image_res, intermediate_dim, latent_dim)
-    
+
     # Train
     history = vanilla_vae.fit(x_train, 0.1, epochs, batch_size, save_dir)
-    
-    # Plot the losses after training
-    plot_history(history)
 
-    # Sample the latent space
-    plt.imshow(vanilla_vae.generate_from_random(), cmap='gray')
+    # # Plot the losses after training
+    # plot_history(history)
+    #
+    # # Sample the latent space
+    # plt.imshow(vanilla_vae.generate_from_random(), cmap='gray')
+
+    # Visualize 2D latent space with colored label (genuine or forgery)
+    x_encoded = vanilla_vae.encoder.predict(x_train)
+    plt.scatter(x_encoded[:, 0], x_encoded[:, 1], c=y_train)
+    plt.colorbar()
+    plt.show()
