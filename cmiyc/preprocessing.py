@@ -229,12 +229,13 @@ def batch_preprocess_aug(files_list, dest_file, final_res, padding, aug_size):
     dataset.to_pickle(dest_file)
     print(' - Done!')
 
+
 if __name__ == '__main__':
 
     final_res = 128
+    aug_size = 16
     padding = True
 
     files = fetch_all_raw()
 
-    # batch_preprocess(files, PATH_TRAIN, final_res, padding)
-    batch_preprocess_aug(files, PATH_TRAIN, final_res, padding, aug_size=16)
+    batch_preprocess_aug(files, PATH_TRAIN, final_res, padding, aug_size)
