@@ -94,6 +94,16 @@ def plot_dataset_random(dataset, n=100, size=128):
     plot_dataset(dataset[sample, ])
 
 
+def generate_from_random(decoder, latent_dim, image_res=128):
+    """
+    Samples form the latent space and return a generated output.
+    """
+    sample = np.random.normal(size=(1, latent_dim))
+    pred = decoder.predict(sample).reshape((image_res, image_res))
+    plt.imshow(pred, cmap='gray')
+    plt.show()
+
+
 if __name__ == '__main__':
     # Load data
     x_train, y_train = dataset_utils.load_clean_train(sig_type='genuine',

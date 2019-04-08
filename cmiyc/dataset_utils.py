@@ -25,4 +25,4 @@ def load_clean_train(sig_type='all', sig_id='all', id_as_label='false'):
         df = df[df['sig_id'].isin(sig_id)]
 
     labels = 'sig_id' if id_as_label else 'label'
-    return np.vstack(df['sig'].to_numpy()), df[labels].to_numpy()
+    return np.vstack(df['sig'].to_numpy()), df[labels].to_numpy().astype('int')
