@@ -2,6 +2,10 @@ from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
 import numpy as np
 
+import math
+
+import dataset_utils
+
 
 def plot_history(history):
     """
@@ -65,13 +69,33 @@ def plot_manifolds_2d(decoder, n=8, size=128, std_dev=1):
     plt.show()
 
 
-def plot_random_x(x, n=8, size=128):
-    figure = np.zeros((size * n, size * n))
-    sample = np.random.randint(0, len(x), (n, n))
-    for i, row in enumerate(sample):
-        for j, ix in enumerate(row):
-            figure[i*size : (i+1)*size, j*size : (j+1)*size] = x[ix].reshape(size, size)
+def plot_dataset(dataset, size=128):
+    """Plot the entire given dataset (arranged in a square figure)
+    """
+    n = math.ceil(math.sqrt(len(dataset)))
+    figure = np.zeros((size*n, size*n))
+    for i, image in enumerate(dataset):
+        if i >= len(dataset):
+            break
+        x = i // n
+        y = i % n
+        figure[x*size: (x+1)*size, y*size: (y+1)*size] = image.reshape(size,
+                                                                       size)
     plt.figure()
     plt.imshow(figure, cmap='gray')
     plt.show()
 
+
+def plot_dataset_random(dataset, n=100, size=128):
+    """Plot a random subset of the given dataset
+    """
+    sample = np.random.randint(0, len(dataset), n)
+    plot_dataset(dataset[sample, ])
+
+
+if __name__ == '__main__':
+    # Load data
+    x_train, y_train = dataset_utils.load_clean_train(sig_type='genuine',
+                                                      sig_id=[1, 2],
+                                                      id_as_label=True)
+    plot_dataset_random(x_train, 16)
