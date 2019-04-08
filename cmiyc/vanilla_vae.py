@@ -7,9 +7,9 @@ from keras.losses import binary_crossentropy, mse
 from keras.callbacks import ModelCheckpoint
 import keras.backend as K
 import numpy as np
-import matplotlib.pyplot as plt
 
 import dataset_utils
+import viz_utils
 
 
 class VanillaVae():
@@ -59,7 +59,7 @@ class VanillaVae():
         """
         reconstruction_loss = mse(inputs, outputs) * original_dim
         kl_loss = 1 + z_log_var - K.square(z_mean) - K.exp(z_log_var)
-        kl_loss = -0.5 * K.sum(kl_loss, axis=1)
+        kl_loss = -0.5 * K.sum(kl_loss, axis=-1)
         return K.mean(reconstruction_loss + kl_loss)
 
     def fit(self, x_train, val_split, epochs, batch_size, save_dir=None):
@@ -108,51 +108,38 @@ class VanillaVae():
         return self.decoder.predict(sample).reshape((image_res, image_res))
 
 
-def plot_history(history):
-    """
-    Plots the training and validation losses
-    """
-    plt.plot(history.history['loss'][1:])
-    plt.plot(history.history['val_loss'][1:])
-    # plt.plot(history.history['loss'])
-    # plt.plot(history.history['val_loss'])
-    plt.title('model loss')
-    plt.ylabel('loss')
-    # plt.yscale(value='log')
-    plt.xlabel('epoch')
-    plt.legend(['train', 'test'], loc='upper left')
-
-
 if __name__ == '__main__':
 
     # Parameters
     image_res = 128
-    intermediate_dim = 128
+    intermediate_dim = 4096
     latent_dim = 2
     val_frac = 0.1
-    epochs = 10
-    batch_size = 32
+    epochs = 25
+    batch_size = 16
     save_dir = 'saved-models/models.h5'
 
     # Load data
     x_train, y_train = dataset_utils.load_clean_train(sig_type='genuine',
-                                                      sig_id='all',
+                                                      sig_id=list(range(2, 4)),
                                                       id_as_label=True)
 
     # Instantiate network
     vanilla_vae = VanillaVae(image_res*image_res, intermediate_dim, latent_dim)
 
     # Train
-    history = vanilla_vae.fit(x_train, 0.1, epochs, batch_size, save_dir)
+    history = vanilla_vae.fit(x_train, val_frac, epochs, batch_size, save_dir)
 
-    # # Plot the losses after training
-    # plot_history(history)
+    # # # Plot the losses after training
+    # # viz_utils.plot_history(history)
+    # #
+    # # # Sample the latent space
+    # # plt.imshow(vanilla_vae.generate_from_random(), cmap='gray')
     #
-    # # Sample the latent space
-    # plt.imshow(vanilla_vae.generate_from_random(), cmap='gray')
+    # # Visualize 2D latent space with colored label (genuine or forgery)
+    # x_encoded = vanilla_vae.encoder.predict(x_train)
+    # # viz_utils.plot_encoded_2d(x_encoded, y_train)
 
-    # Visualize 2D latent space with colored label (genuine or forgery)
-    x_encoded = vanilla_vae.encoder.predict(x_train)
-    plt.scatter(x_encoded[:, 0], x_encoded[:, 1], c=y_train)
-    plt.colorbar()
-    plt.show()
+    # Visualize 2D manifolds
+    viz_utils.plot_manifolds_2d(vanilla_vae.decoder)
+

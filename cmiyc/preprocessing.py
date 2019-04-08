@@ -210,7 +210,7 @@ def batch_preprocess_aug(files_list, dest_file, final_res, padding, aug_size):
                                      data_format=None,
                                      validation_split=0.0,
                                      dtype=None)
-        label, sig_id =get_type_and_id_from_file(file)
+        label, sig_id = get_type_and_id_from_file(file)
         dataset = dataset.append({
             'label': label,
             'sig_id': sig_id,
