@@ -5,6 +5,7 @@ from keras.models import Model
 from keras.layers import Input, Dense, Lambda
 from keras.losses import binary_crossentropy, mse
 from keras.callbacks import ModelCheckpoint
+import matplotlib.pyplot as plt
 import keras.backend as K
 import numpy as np
 
@@ -112,17 +113,17 @@ if __name__ == '__main__':
 
     # Parameters
     image_res = 128
-    intermediate_dim = 4096
-    latent_dim = 2
+    intermediate_dim = 256
+    latent_dim = 64
     val_frac = 0.1
     epochs = 25
     batch_size = 16
     save_dir = 'saved-models/models.h5'
 
     # Load data
-    x_train, y_train = dataset_utils.load_clean_train(sig_type='genuine',
-                                                      sig_id=list(range(2, 4)),
-                                                      id_as_label=True)
+    x_train, y_train = dataset_utils.load_clean_train(sig_type='all',
+                                                      sig_id=[1],
+                                                      id_as_label=False)
 
     # Instantiate network
     vanilla_vae = VanillaVae(image_res*image_res, intermediate_dim, latent_dim)
@@ -130,16 +131,16 @@ if __name__ == '__main__':
     # Train
     history = vanilla_vae.fit(x_train, val_frac, epochs, batch_size, save_dir)
 
-    # # # Plot the losses after training
-    # # viz_utils.plot_history(history)
-    # #
-    # # # Sample the latent space
-    # # plt.imshow(vanilla_vae.generate_from_random(), cmap='gray')
+    # # Plot the losses after training
+    # viz_utils.plot_history(history)
+    #
+    # # Sample the latent space
+    # plt.imshow(vanilla_vae.generate_from_random(), cmap='gray')
     #
     # # Visualize 2D latent space with colored label (genuine or forgery)
     # x_encoded = vanilla_vae.encoder.predict(x_train)
-    # # viz_utils.plot_encoded_2d(x_encoded, y_train)
-
-    # Visualize 2D manifolds
-    viz_utils.plot_manifolds_2d(vanilla_vae.decoder)
+    # viz_utils.plot_encoded_2d(x_encoded, y_train)
+    #
+    # # Visualize 2D manifolds
+    # viz_utils.plot_manifolds_2d(vanilla_vae.decoder)
 

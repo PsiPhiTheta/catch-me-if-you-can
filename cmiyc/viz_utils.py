@@ -22,6 +22,7 @@ def plot_history(history):
     plt.legend(['train', 'test'], loc='upper left')
     plt.show()
 
+
 def plot_encoded_2d(x, label):
     """
     Plot the encoded x given the label (sig_id or type).
@@ -53,9 +54,9 @@ def plot_encoded_3d(x, label):
     plt.show()
 
 
-def plot_manifolds_2d(decoder, n=8, size=128, std_dev=1):
-    grid_x = np.linspace(-8, 8, n)
-    grid_y = np.linspace(-8, 8, n)
+def plot_manifolds_2d(decoder, n=15, size=128, std_dev=1):
+    grid_x = np.linspace(-15, 15, n)
+    grid_y = np.linspace(-15, 15, n)
     figure = np.zeros((size * n, size * n))
     for i, yi in enumerate(grid_x):
         for j, xi in enumerate(grid_y):
@@ -98,4 +99,4 @@ if __name__ == '__main__':
     x_train, y_train = dataset_utils.load_clean_train(sig_type='genuine',
                                                       sig_id=[1, 2],
                                                       id_as_label=True)
-    plot_dataset_random(x_train, 16)
+    plot_dataset(x_train)
