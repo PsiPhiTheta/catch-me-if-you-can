@@ -3,3 +3,4 @@ cmiyc/data
 cmiyc/saved-models
 log_antoine.md
 *.DS_Store
+**/__pycache__
