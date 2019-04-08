@@ -101,28 +101,21 @@ class VanillaVae():
         """
         return self.vae.predict(processed_img)
 
-    def generate_from_random(self):
-        """
-        Samples form the latent space and return a generated output.
-        """
-        sample = np.random.normal(size=(1, latent_dim))
-        return self.decoder.predict(sample).reshape((image_res, image_res))
-
 
 if __name__ == '__main__':
 
     # Parameters
     image_res = 128
-    intermediate_dim = 256
-    latent_dim = 64
+    intermediate_dim = 512
+    latent_dim = 256
     val_frac = 0.1
-    epochs = 25
-    batch_size = 16
+    epochs = 250
+    batch_size = 32
     save_dir = 'saved-models/models.h5'
 
     # Load data
-    x_train, y_train = dataset_utils.load_clean_train(sig_type='all',
-                                                      sig_id=[1],
+    x_train, y_train = dataset_utils.load_clean_train(sig_type='genuine',
+                                                      sig_id=1,
                                                       id_as_label=False)
 
     # Instantiate network
@@ -135,7 +128,7 @@ if __name__ == '__main__':
     # viz_utils.plot_history(history)
     #
     # # Sample the latent space
-    # plt.imshow(vanilla_vae.generate_from_random(), cmap='gray')
+    # viz_utils.generate_from_random(vanilla_vae.decoder, latent_dim, image_res)
     #
     # # Visualize 2D latent space with colored label (genuine or forgery)
     # x_encoded = vanilla_vae.encoder.predict(x_train)
