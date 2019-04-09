@@ -92,7 +92,7 @@ def fetch_all_raw():
     files = []
     for path in paths:
         files += glob.glob(path, recursive=True)
-    assert len(files) == 2295, 'was expecting 2295 files but got {}'.format(len(files))
+    assert len(files) == 2295, 'was expecting 2295 files but got {}. Ensure all filepaths listed under fetch_all_raw() are present.'.format(len(files))
     return files
 
 

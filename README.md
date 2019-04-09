@@ -18,5 +18,5 @@ cd cmiyc
 python preprocessing.py
 ```
 
-This will pre-process all the dutch offline signatures from the test set and save them as two Numpy arrays, one for the genuine and one for the forgeries, in `data/clean/`. 
+This will pre-process all the dutch offline signatures from the test set and save them as two Numpy arrays, one for the genuine and one for the forgeries, in `data/clean/`. Note that estimated file size for the .pkl when processing all files is **4.8GB**.
 

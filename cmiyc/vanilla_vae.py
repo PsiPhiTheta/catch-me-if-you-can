@@ -63,13 +63,16 @@ class VanillaVae():
         kl_loss = -0.5 * K.sum(kl_loss, axis=-1)
         return K.mean(reconstruction_loss + kl_loss)
 
-    def fit(self, x_train, val_split, epochs, batch_size, save_dir=None):
-        """ Train the model and save the weights is a `save_path` is set.
+    def fit(self, x_train, val_split, epochs, batch_size, save_dir=None, fn=None):
+        """ Train the model and save the weights if a `save_dir` is set.
         """
+        if save_dir:
+            if not os.path.exists(save_dir):
+                os.makedirs(save_dir)
 
         # Setup checkpoint to save best model
         callbacks = [
-            ModelCheckpoint(save_dir, monitor='val_loss', verbose=1,
+            ModelCheckpoint(save_dir+fn, monitor='val_loss', verbose=1,
                             save_best_only=True)
         ] if save_dir else []
 
@@ -84,9 +87,7 @@ class VanillaVae():
         print("Total train time: {0:.2f} sec".format(time.time() - start))
 
         if save_dir:
-            if not os.path.exists(save_dir):
-                os.makedirs(save_dir)
-            self.vae.save_weights(save_dir)
+            self.vae.save_weights(save_dir+fn)
         return history
 
     def load_weights(self, weight_path):
@@ -111,7 +112,12 @@ if __name__ == '__main__':
     val_frac = 0.1
     epochs = 250
     batch_size = 32
-    save_dir = 'saved-models/models.h5'
+    save_dir = 'saved-models/'
+    fn = 'models_res{}_id{}_ld{}_epoch{}.h5'.format(
+        image_res, 
+        intermediate_dim,
+        latent_dim,
+        epochs )
 
     # Load data
     x_train, y_train = dataset_utils.load_clean_train(sig_type='genuine',
@@ -122,7 +128,7 @@ if __name__ == '__main__':
     vanilla_vae = VanillaVae(image_res*image_res, intermediate_dim, latent_dim)
 
     # Train
-    history = vanilla_vae.fit(x_train, val_frac, epochs, batch_size, save_dir)
+    history = vanilla_vae.fit(x_train, val_frac, epochs, batch_size, save_dir, fn)
 
     # # Plot the losses after training
     # viz_utils.plot_history(history)
