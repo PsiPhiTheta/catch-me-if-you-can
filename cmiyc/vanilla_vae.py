@@ -113,7 +113,11 @@ if __name__ == '__main__':
     epochs = 250
     batch_size = 32
     save_dir = 'saved-models/'
-    fn = 'models.h5'
+    fn = 'models_res{}_id{}_ld{}_epoch{}.h5'.format(
+        image_res, 
+        intermediate_dim,
+        latent_dim,
+        epochs )
 
     # Load data
     x_train, y_train = dataset_utils.load_clean_train(sig_type='genuine',
