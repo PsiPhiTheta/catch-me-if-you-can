@@ -103,6 +103,11 @@ def generate_from_random(decoder, latent_dim, image_res=128):
     plt.imshow(pred, cmap='gray')
     plt.show()
 
+def plot_original_image(x_train):
+    """
+    Plots original input.
+    """
+    plt.imshow(x_train[0].reshape(128, 128), cmap='gray')
 
 if __name__ == '__main__':
     # Load data
