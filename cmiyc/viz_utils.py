@@ -1,10 +1,12 @@
 from mpl_toolkits.mplot3d import Axes3D
+from sklearn.manifold import TSNE
 import matplotlib.pyplot as plt
 import numpy as np
-
 import math
 
 import dataset_utils
+
+from vanilla_vae import VanillaVae
 
 
 def plot_history(history):
@@ -104,9 +106,40 @@ def generate_from_random(decoder, latent_dim, image_res=128):
     plt.show()
 
 
+def encode_plot_tsne(x, y, encoder):
+    """
+    Plot t-SNE of the encoded signatures color-coded with the labels
+    """
+    x = encoder.predict(x)
+    tsne = TSNE()
+    results = tsne.fit_transform(x)
+    plt.scatter(results[:, 0], results[:, 1],
+                c=y,
+                cmap='jet',
+                marker='o',
+                s=100,
+                alpha=0.5)
+    plt.colorbar()
+    plt.show()
+
+
 if __name__ == '__main__':
+
+    image_res = 128
+    intermediate_dim = 512
+    latent_dim = 256
+    sig_id = 1
+    save_dir = 'saved-models/models.h5'
+
+    # Load model
+    vanilla_vae = VanillaVae(image_res * image_res, intermediate_dim, latent_dim)
+    vanilla_vae.load_weights(save_dir)
+
     # Load data
-    x_train, y_train = dataset_utils.load_clean_train(sig_type='genuine',
-                                                      sig_id=[1, 2],
-                                                      id_as_label=True)
-    plot_dataset(x_train)
+    x, y = dataset_utils.load_clean_train(sig_type='all',
+                                          sig_id=sig_id,
+                                          id_as_label=False)
+
+    # Viz t-SNE
+    encode_plot_tsne(x, y, vanilla_vae.encoder)
+
