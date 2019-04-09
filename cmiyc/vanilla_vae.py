@@ -136,4 +136,6 @@ if __name__ == '__main__':
     #
     # # Visualize 2D manifolds
     # viz_utils.plot_manifolds_2d(vanilla_vae.decoder)
-
+    
+    # # Plot the original input image
+    # viz_utils.plot_original_image(x_train)
