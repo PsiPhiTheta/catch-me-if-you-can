@@ -63,31 +63,49 @@ class VanillaVae():
         kl_loss = -0.5 * K.sum(kl_loss, axis=-1)
         return K.mean(reconstruction_loss + kl_loss)
 
-    def fit(self, x_train, val_split, epochs, batch_size, save_dir=None, fn=None):
+    def get_data(self, sig_id=1, sig_type='genuine'):
+        '''
+        Load the specified sig id and signature type.
+        '''
+        x_train, y_train = dataset_utils.load_clean_train(sig_type=sig_type,
+                                                      sig_id=sig_id,
+                                                      id_as_label=False)
+
+        self.x_train = x_train
+        self.y_train = y_train
+
+    def fit(self, val_split, epochs, batch_size, save_dir=None, fn=None):
         """ Train the model and save the weights if a `save_dir` is set.
         """
         if save_dir:
             if not os.path.exists(save_dir):
                 os.makedirs(save_dir)
 
+        temp_fn = "incomplete_" + fn
+        
         # Setup checkpoint to save best model
         callbacks = [
-            ModelCheckpoint(save_dir+fn, monitor='val_loss', verbose=1,
+            ModelCheckpoint(save_dir+temp_fn, monitor='val_loss', verbose=1,
                             save_best_only=True)
         ] if save_dir else []
 
         start = time.time()
-        history = self.vae.fit(x_train,
+
+        history = self.vae.fit(self.x_train,
                      epochs=epochs,
                      batch_size=batch_size,
                      validation_split=val_split,
                      shuffle=True,
                      callbacks=callbacks,
                      verbose=1)
+        
         print("Total train time: {0:.2f} sec".format(time.time() - start))
 
         if save_dir:
+            # Rename to proper filename after all epochs successfully run
+            os.rename(save_dir+temp_fn, save_dir+fn)
             self.vae.save_weights(save_dir+fn)
+            print("Saved final weights to {}".format(save_dir+fn))
         return history
 
     def load_weights(self, weight_path):
@@ -102,10 +120,60 @@ class VanillaVae():
         """
         return self.vae.predict(processed_img)
 
+def train_all_sigs(sig_type='genuine', epochs=250):
+    '''
+    Helper function to train and save VAE weights for all signatures.
+
+    Skips a signature if the associated weight file has already been created
+    in the anticipated directory.
+    '''
+
+    sig_id_list = dataset_utils.get_unique_sig_ids()
+
+    start = time.time()
+    
+    for sig_id in sig_id_list:
+
+        # Parameters
+        # sig_type = sig_type
+        image_res = 128
+        intermediate_dim = 512
+        latent_dim = 256
+        val_frac = 0.1
+        # epochs = epochs
+        batch_size = 32
+        save_dir = 'saved-models/'
+        fn = 'models_{}_sigid{}_res{}_id{}_ld{}_epoch{}.h5'.format(
+            sig_type,
+            sig_id,
+            image_res, 
+            intermediate_dim,
+            latent_dim,
+            epochs )
+
+        # Skip this sig_id if the weight file has already been created:
+        # Anticipating that this will take a long time to run,
+        # So make it easy to restart where we left off
+        weight_exists = os.path.isfile(save_dir+fn)
+        if weight_exists:
+            print("{} already exists, skipping".format(fn))
+            continue
+
+        vanilla_vae = VanillaVae(image_res*image_res, intermediate_dim, latent_dim)
+
+        # Get training data
+        vanilla_vae.get_data(sig_id, sig_type)
+
+        # Train
+        history = vanilla_vae.fit(val_frac, epochs, batch_size, save_dir, fn)
+
+    print("train_all_sigs completed in {} sec".format(time.time()- start))
 
 if __name__ == '__main__':
 
     # Parameters
+    sig_id = 1
+    sig_type = 'genuine'
     image_res = 128
     intermediate_dim = 512
     latent_dim = 256
@@ -113,22 +181,22 @@ if __name__ == '__main__':
     epochs = 250
     batch_size = 32
     save_dir = 'saved-models/'
-    fn = 'models_res{}_id{}_ld{}_epoch{}.h5'.format(
+    fn = 'models_{}_sigid{}_res{}_id{}_ld{}_epoch{}.h5'.format(
+        sig_type,
+        sig_id,
         image_res, 
         intermediate_dim,
         latent_dim,
         epochs )
 
-    # Load data
-    x_train, y_train = dataset_utils.load_clean_train(sig_type='genuine',
-                                                      sig_id=1,
-                                                      id_as_label=False)
-
     # Instantiate network
     vanilla_vae = VanillaVae(image_res*image_res, intermediate_dim, latent_dim)
 
+    # Get training data
+    vanilla_vae.get_data(sig_id, sig_type)
+
     # Train
-    history = vanilla_vae.fit(x_train, val_frac, epochs, batch_size, save_dir, fn)
+    history = vanilla_vae.fit(val_frac, epochs, batch_size, save_dir, fn)
 
     # # Plot the losses after training
     # viz_utils.plot_history(history)
