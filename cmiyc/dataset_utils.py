@@ -29,7 +29,7 @@ def load_clean_train(sig_type='all', sig_id='all', id_as_label='false'):
     labels = 'sig_id' if id_as_label else 'label'
     return np.vstack(df['sig'].to_numpy()), df[labels].to_numpy().astype('int')
 
-def get_train_sig_ids(sig_type="genuine", mode='random', frac=0.25, seed=4):
+def get_sig_ids(sig_type="genuine", mode='random', frac=0.25, seed=4):
     '''
     Get a list of training sig_ids to use when training all our VAEs.
 
@@ -92,8 +92,8 @@ def get_train_sig_ids(sig_type="genuine", mode='random', frac=0.25, seed=4):
     df = pd.read_pickle(pre.PATH_ALL)
     return sorted(df['sig_id'].unique())
 
-def test_get_train_sig_ids():
-    print("Running unit test for test_get_train_sig_ids()")
+def test_get_sig_ids():
+    print("Running unit test for get_sig_ids()")
     print("-" * 20)
     
     print("Random subset of sig_ids:")
