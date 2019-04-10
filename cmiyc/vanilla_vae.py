@@ -1,5 +1,7 @@
 import os
 import time
+import pickle
+import random
 
 from keras.models import Model
 from keras.layers import Input, Dense, Lambda
@@ -13,7 +15,10 @@ import dataset_utils
 import viz_utils
 
 
+
 class VanillaVae():
+    SAVE_DIR = 'saved-models/'
+
     def __init__(self, input_dim, intermediate_dim, latent_dim):
 
         # Encoder
@@ -74,6 +79,21 @@ class VanillaVae():
         self.x_train = x_train
         self.y_train = y_train
 
+    def get_split_data(self, sig_id=1, sig_type='genuine'):
+        '''
+        Load the specified sig id and signature type,
+        and split out some for training the VAE
+        Reserve the rest for testing (experiments)
+
+        TODO NOT WORKING
+        '''
+        train, test = dataset_utils.load_clean_train_test(vae_sig_type=sig_type,
+                                                      sig_id=sig_id,
+                                                      id_as_label=False)
+
+        self.x_train = train
+        # self.y_train = y_train
+
     def fit(self, val_split, epochs, batch_size, save_dir=None, fn=None):
         """ Train the model and save the weights if a `save_dir` is set.
         """
@@ -120,29 +140,42 @@ class VanillaVae():
         """
         return self.vae.predict(processed_img)
 
-def train_all_sigs(sig_type='genuine', epochs=250):
+def train_all_sigs(sig_type='genuine', epochs=250, frac=0.5, seed=4):
     '''
-    Helper function to train and save VAE weights for all signatures.
+    Helper function to train and save VAE weights 
+    for a set of genuine training signatures.
 
     Skips a signature if the associated weight file has already been created
     in the anticipated directory.
+
+    Default seed=4 is set for reproducibility.
     '''
 
-    sig_id_list = dataset_utils.get_unique_sig_ids()
+    if not os.path.exists(VanillaVae.SAVE_DIR + 'logs/'):
+        os.makedirs(VanillaVae.SAVE_DIR + 'logs/')
+
+    if not os.path.exists(VanillaVae.SAVE_DIR + 'history/'):
+        os.makedirs(VanillaVae.SAVE_DIR + 'history/')
+
+    sig_id_list = dataset_utils.get_sig_ids(sig_type='genuine')
+
+    # Save this list for reference later, in case we need it
+    # ts = time.strftime("%Y%m%d-%H%M%S")
+    # logfile = VanillaVae.SAVE_DIR + 'logs/' + 'train_sig_list_{}.txt'.format(ts)
+    # print("Made logfile at {}".format(logfile))
 
     start = time.time()
-    
+
     for sig_id in sig_id_list:
 
         # Parameters
-        # sig_type = sig_type
+
         image_res = 128
         intermediate_dim = 512
         latent_dim = 256
         val_frac = 0.1
-        # epochs = epochs
         batch_size = 32
-        save_dir = 'saved-models/'
+        save_dir = VanillaVae.SAVE_DIR
         fn = 'models_{}_sigid{}_res{}_id{}_ld{}_epoch{}.h5'.format(
             sig_type,
             sig_id,
@@ -166,8 +199,23 @@ def train_all_sigs(sig_type='genuine', epochs=250):
 
         # Train
         history = vanilla_vae.fit(val_frac, epochs, batch_size, save_dir, fn)
+        
+        # Write history to pickle in case we want it later
+        hist_pickle_filename = 'history_{}_sigid{}_res{}_id{}_ld{}_epoch{}.pkl'.format(
+            sig_type,
+            sig_id,
+            image_res, 
+            intermediate_dim,
+            latent_dim,
+            epochs )
+        
+        with open(VanillaVae.SAVE_DIR + 'history/' + hist_pickle_filename, 'wb') as fp:
+            pickle.dump(history.history, fp)
+        print("History saved to {}".format(VanillaVae.SAVE_DIR + 'history/' + hist_pickle_filename))
 
     print("train_all_sigs completed in {} sec".format(time.time()- start))
+
+    return sig_id_list
 
 if __name__ == '__main__':
 
@@ -180,14 +228,15 @@ if __name__ == '__main__':
     val_frac = 0.1
     epochs = 250
     batch_size = 32
-    save_dir = 'saved-models/'
+    save_dir = VanillaVae.SAVE_DIR
     fn = 'models_{}_sigid{}_res{}_id{}_ld{}_epoch{}.h5'.format(
-        sig_type,
-        sig_id,
-        image_res, 
-        intermediate_dim,
-        latent_dim,
-        epochs )
+            sig_type,
+            sig_id,
+            image_res, 
+            intermediate_dim,
+            latent_dim,
+            epochs 
+        )
 
     # Instantiate network
     vanilla_vae = VanillaVae(image_res*image_res, intermediate_dim, latent_dim)
