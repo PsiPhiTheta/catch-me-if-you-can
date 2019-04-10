@@ -81,9 +81,11 @@ class VanillaVae():
             if not os.path.exists(save_dir):
                 os.makedirs(save_dir)
 
+        temp_fn = "incomplete_" + fn
+        
         # Setup checkpoint to save best model
         callbacks = [
-            ModelCheckpoint(save_dir+fn, monitor='val_loss', verbose=1,
+            ModelCheckpoint(save_dir+temp_fn, monitor='val_loss', verbose=1,
                             save_best_only=True)
         ] if save_dir else []
 
@@ -96,10 +98,14 @@ class VanillaVae():
                      shuffle=True,
                      callbacks=callbacks,
                      verbose=1)
+        
         print("Total train time: {0:.2f} sec".format(time.time() - start))
 
         if save_dir:
+            # Rename to proper filename after all epochs successfully run
+            os.rename(save_dir+temp_fn, save_dir+fn)
             self.vae.save_weights(save_dir+fn)
+            print("Saved final weights to {}".format(save_dir+fn))
         return history
 
     def load_weights(self, weight_path):
@@ -114,6 +120,54 @@ class VanillaVae():
         """
         return self.vae.predict(processed_img)
 
+def train_all_sigs(sig_type='genuine', epochs=250):
+    '''
+    Helper function to train and save VAE weights for all signatures.
+
+    Skips a signature if the associated weight file has already been created
+    in the anticipated directory.
+    '''
+
+    sig_id_list = dataset_utils.get_unique_sig_ids()
+
+    start = time.time()
+    
+    for sig_id in sig_id_list:
+
+        # Parameters
+        # sig_type = sig_type
+        image_res = 128
+        intermediate_dim = 512
+        latent_dim = 256
+        val_frac = 0.1
+        # epochs = epochs
+        batch_size = 32
+        save_dir = 'saved-models/'
+        fn = 'models_{}_sigid{}_res{}_id{}_ld{}_epoch{}.h5'.format(
+            sig_type,
+            sig_id,
+            image_res, 
+            intermediate_dim,
+            latent_dim,
+            epochs )
+
+        # Skip this sig_id if the weight file has already been created:
+        # Anticipating that this will take a long time to run,
+        # So make it easy to restart where we left off
+        weight_exists = os.path.isfile(save_dir+fn)
+        if weight_exists:
+            print("{} already exists, skipping".format(fn))
+            continue
+
+        vanilla_vae = VanillaVae(image_res*image_res, intermediate_dim, latent_dim)
+
+        # Get training data
+        vanilla_vae.get_data(sig_id, sig_type)
+
+        # Train
+        history = vanilla_vae.fit(val_frac, epochs, batch_size, save_dir, fn)
+
+    print("train_all_sigs completed in {} sec".format(time.time()- start))
 
 if __name__ == '__main__':
 
