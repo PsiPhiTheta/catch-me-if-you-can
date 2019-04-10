@@ -81,7 +81,7 @@ class Experiment():
         Returns experiment output as a dict.
         Args:
 
-            print: if True, prints results to stdout
+            print_output: if True, prints results to stdout
         '''
 
         ## Test the classifier, save outputs
