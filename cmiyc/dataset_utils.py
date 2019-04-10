@@ -15,7 +15,7 @@ def load_clean_train(sig_type='all', sig_id='all', id_as_label='false'):
 
     sig_id = [sig_id] if isinstance(sig_id, int) else sig_id
 
-    df = pd.read_pickle(pre.PATH_TRAIN)
+    df = pd.read_pickle(pre.PATH_ALL)
     if sig_type == 'genuine':
         df = df[df['label'] == 1]
     elif sig_type == 'forgery':
@@ -27,6 +27,6 @@ def load_clean_train(sig_type='all', sig_id='all', id_as_label='false'):
     labels = 'sig_id' if id_as_label else 'label'
     return np.vstack(df['sig'].to_numpy()), df[labels].to_numpy().astype('int')
 
-def get_unique_sig_ids():
-    df = pd.read_pickle(pre.PATH_TRAIN)
+def get_unique_sig_ids(sig_type="genuine"):
+    df = pd.read_pickle(pre.PATH_ALL)
     return sorted(df['sig_id'].unique())
