@@ -26,3 +26,7 @@ def load_clean_train(sig_type='all', sig_id='all', id_as_label='false'):
 
     labels = 'sig_id' if id_as_label else 'label'
     return np.vstack(df['sig'].to_numpy()), df[labels].to_numpy().astype('int')
+
+def get_unique_sig_ids():
+    df = pd.read_pickle(pre.PATH_TRAIN)
+    return sorted(df['sig_id'].unique())
