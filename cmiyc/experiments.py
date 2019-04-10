@@ -36,7 +36,7 @@ def classification(sig_id=1, classifier='tree'):
     elif classifier == 'forest':
         clf = RandomForestClassifier(max_depth=5, n_estimators=10)
     elif classifier == 'knn':
-        clf = KNeighborsClassifier()
+        clf = KNeighborsClassifier(n_neighbors=10)
     else:
         raise Exception('Unrecognized classifier type {}'.format(classifier))
 
@@ -48,9 +48,11 @@ def classification(sig_id=1, classifier='tree'):
     print('Accuracy:', metrics.accuracy_score(y_test, y_pred))
     print('Recall: ', metrics.recall_score(y_test, y_pred))
     print('F1 Score:', metrics.f1_score(y_test, y_pred))
-    fpr_keras, tpr_keras, thresholds_keras = metrics.roc_curve(y_test, y_pred)
+
     print('-----------------------------------------------------')
     print('ROC Curve / AUC as follows:')
+    y_pred = clf.predict_proba(x_test)[:, 1]
+    fpr_keras, tpr_keras, thresholds_keras = metrics.roc_curve(y_test, y_pred)
     print('False positive rates for each possible threshold:', fpr_keras)
     print('True positive rates for each possible threshold:', tpr_keras)
     auc_keras = metrics.auc(fpr_keras, tpr_keras)
@@ -62,13 +64,13 @@ def plot_AUC(fpr_keras, tpr_keras, auc_keras, classifier):
     plt.figure(1)
     plt.plot([0, 1], [0, 1], 'k--')
     plt.plot(fpr_keras, tpr_keras, label=(classifier, '(area = {:.3f})'.format(auc_keras)))
-    plt.xlabel('False positive rate')
+    plt.xlabel('False positive rate') 
     plt.ylabel('True positive rate')
     plt.title('ROC curve')
     plt.legend(loc='best')
     plt.show()
 
 if __name__ == '__main__':
-    classification(sig_id=1, classifier='tree')
+    # classification(sig_id=1, classifier='tree'), removed since we used random forest instead
     classification(sig_id=1, classifier='forest')
     classification(sig_id=1, classifier='knn')
