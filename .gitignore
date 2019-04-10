@@ -1,6 +1,7 @@
 .idea
 cmiyc/data
 cmiyc/saved-models
+cmiyc/exp_outputs
 log_antoine.md
 *.DS_Store
 *.pyc

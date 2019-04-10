@@ -1,3 +1,5 @@
+import os
+
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import RandomForestClassifier
@@ -13,9 +15,11 @@ class Experiment():
     '''
     Runs one single experiment and writes results to a file if specified.
     '''
-    EXPERIMENT_OUTPUT_FILE = 'experiment_outputs.txt'
+    IMG_DIR = 'exp_outputs/imgs/'
+    EXP_DIR = 'exp_outputs/'
 
     def __init__(self, args):
+        self.args = args
         self.vanilla_vae = VanillaVae(
             args['image_res']*args['image_res'], 
             args['intermediate_dim'], 
@@ -23,6 +27,7 @@ class Experiment():
         self.vanilla_vae.load_weights(args['save_dir'])
 
         self.sig_id = args['sig_id']
+        self.trained_on = args['trained_on']
 
         self.x_train = None
         self.x_test  = None
@@ -37,8 +42,7 @@ class Experiment():
 
         output = self.get_output()
 
-        with open(Experiment.EXPERIMENT_OUTPUT_FILE, 'a') as fn:
-            fn.write(str(output))
+        self.write_to_txt(output)
 
     def load_data(self):
         # Load data
@@ -89,11 +93,13 @@ class Experiment():
         auc_keras = metrics.auc(fpr_keras, tpr_keras)
 
         output = {
-            'accuracy':  metrics.accuracy_score(self.y_test, y_pred),
-            'recall':    metrics.recall_score(self.y_test, y_pred),
-            'f1':        metrics.f1_score(self.y_test, y_pred),
-            'fpr_keras': fpr_keras,
-            'tpr_keras': tpr_keras,
+            'sig_id':     self.sig_id,
+            'trained_on': self.trained_on,
+            'accuracy':   metrics.accuracy_score(self.y_test, y_pred),
+            'recall':     metrics.recall_score(self.y_test, y_pred),
+            'f1':         metrics.f1_score(self.y_test, y_pred),
+            'fpr_keras':  fpr_keras,
+            'tpr_keras':  tpr_keras,
             'thresholds_keras': thresholds_keras,
             'auc_keras':        auc_keras
         }
@@ -109,17 +115,20 @@ class Experiment():
             print('False positive rates for each possible threshold:', output['fpr_keras'])
             print('True positive rates for each possible threshold:', output['tpr_keras'])
             print('AUC:', output['auc_keras'])
-            Experiment.plot_AUC(
+            
+            save_img = True
+            self.plot_AUC(
                 output['fpr_keras'], 
                 output['tpr_keras'], 
                 output['auc_keras'], 
-                self.classifier_type)
+                self.classifier_type,
+                save_img=save_img)
+            
             print('')
 
         return output
 
-    @staticmethod
-    def plot_AUC(fpr_keras, tpr_keras, auc_keras, classifier):
+    def plot_AUC(self, fpr_keras, tpr_keras, auc_keras, classifier, save_img=True):
         plt.figure(1)
         plt.plot([0, 1], [0, 1], 'k--')
         plt.plot(fpr_keras, tpr_keras, label=(classifier, '(area = {:.3f})'.format(auc_keras)))
@@ -127,7 +136,36 @@ class Experiment():
         plt.ylabel('True positive rate')
         plt.title('ROC curve')
         plt.legend(loc='best')
-        plt.show()
+        if save_img:
+            if not os.path.exists(Experiment.IMG_DIR):
+                os.makedirs(Experiment.IMG_DIR)
+            figname = 'sig_id_{}.png'.format(self.sig_id)
+            plt.savefig(Experiment.IMG_DIR+figname)
+        else:
+            plt.show()
+
+    def write_to_txt(self, output):
+        '''
+        Write this experiment's output to a text file for future use.
+        '''
+
+        if not os.path.exists(Experiment.EXP_DIR):
+                os.makedirs(Experiment.EXP_DIR)
+
+        file = Experiment.EXP_DIR + 'sig_id{}_trainedon{}_clf{}_ir{}_id{}_ld{}.txt'.format(
+            self.sig_id,
+            self.trained_on,
+            self.classifier_type,
+            self.args['image_res'],
+            self.args['intermediate_dim'],
+            self.args['latent_dim']
+            )
+
+        with open(file, 'a') as fn:
+            fn.write(str(output))
+
+        print('Successfully wrote file to {}'.format(file))
+
 
 if __name__ == '__main__':
 
@@ -135,6 +173,7 @@ if __name__ == '__main__':
     args = {
         'classifier': 'forest',
         'sig_id':     1,
+        'trained_on': 'genuine',
         'image_res':  128,
         'intermediate_dim': 512,
         'latent_dim': 256,
