@@ -169,7 +169,6 @@ class Experiment():
 
 if __name__ == '__main__':
 
-    # TODO: check these
     args = {
         'classifier': 'forest',
         'sig_id':     1,

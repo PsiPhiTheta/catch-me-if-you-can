@@ -18,4 +18,4 @@ import viz_utils
 from vanilla_vae import VanillaVae, train_all_sigs
 
 if __name__ == '__main__':
-	train_all_sigs(sig_type='genuine', epochs=3)
+	train_all_sigs(sig_type='genuine', epochs=250)
