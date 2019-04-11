@@ -176,7 +176,7 @@ if __name__ == '__main__':
         'image_res':  128,
         'intermediate_dim': 512,
         'latent_dim': 256,
-        'save_dir': 'saved-models/models_res128_id512_ld256_epoch250.h5'
+        'save_dir': 'saved-models/models_genuine_sigid1_res128_id512_ld256_epoch250.h5'
     }
 
     exp = Experiment(args)
