@@ -82,21 +82,6 @@ class VanillaVae():
         self.x_train = x_train
         self.y_train = y_train
 
-    def get_split_data(self, sig_id=1, sig_type='genuine'):
-        '''
-        Load the specified sig id and signature type,
-        and split out some for training the VAE
-        Reserve the rest for testing (experiments)
-
-        TODO NOT WORKING
-        '''
-        train, test = dataset_utils.load_clean_train_test(vae_sig_type=sig_type,
-                                                      sig_id=sig_id,
-                                                      id_as_label=False)
-
-        self.x_train = train
-        # self.y_train = y_train
-
     def fit(self, val_split, epochs, batch_size, save_dir=None, fn=None):
         """ Train the model and save the weights if a `save_dir` is set.
         """
