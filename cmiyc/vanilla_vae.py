@@ -72,7 +72,12 @@ class VanillaVae():
         '''
         Load the specified sig id and signature type.
         '''
-        x_train, y_train = dataset_utils.load_clean_train(sig_type=sig_type,
+
+        '''
+        TODO: again, wasteful to be calling this here.
+        Move to outside loop later.
+        '''
+        x_train, y_train, x_test, y_test = dataset_utils.load_clean_train_test(vae_sig_type=sig_type,
                                                       sig_id=sig_id,
                                                       id_as_label=False)
 
