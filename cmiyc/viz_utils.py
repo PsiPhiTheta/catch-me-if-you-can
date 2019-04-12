@@ -57,8 +57,8 @@ def plot_encoded_3d(x, label):
 
 
 def plot_manifolds_2d(decoder, n=15, size=128, std_dev=1):
-    grid_x = np.linspace(-15, 15, n)
-    grid_y = np.linspace(-15, 15, n)
+    grid_x = np.linspace(-4, 4, n)
+    grid_y = np.linspace(-4, 4, n)
     figure = np.zeros((size * n, size * n))
     for i, yi in enumerate(grid_x):
         for j, xi in enumerate(grid_y):
@@ -68,7 +68,7 @@ def plot_manifolds_2d(decoder, n=15, size=128, std_dev=1):
             figure[i * size: (i + 1) * size, j * size: (j + 1) * size] = im
 
     plt.figure()
-    plt.imshow(figure, cmap='gray')
+    plt.imshow(figure, cmap='jet')
     plt.show()
 
 

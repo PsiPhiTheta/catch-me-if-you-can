@@ -1,19 +1,14 @@
 import os
 import time
 import pickle
-import random
 
 from keras.models import Model
 from keras.layers import Input, Dense, Lambda
 from keras.losses import binary_crossentropy, mse
 from keras.callbacks import ModelCheckpoint
-import matplotlib.pyplot as plt
 import keras.backend as K
-import numpy as np
 
 import dataset_utils
-import viz_utils
-
 
 
 class VanillaVae():
@@ -68,7 +63,7 @@ class VanillaVae():
         kl_loss = -0.5 * K.sum(kl_loss, axis=-1)
         return K.mean(reconstruction_loss + kl_loss)
 
-    def fit(self, x_train, val_split, epochs, batch_size, save_dir=None, fn=None):
+    def fit(self, x_train, val_split, epochs, batch_size, save_dir=None, fn=''):
         """ Train the model and save the weights if a `save_dir` is set.
         """
         if save_dir:
