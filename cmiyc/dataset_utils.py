@@ -199,5 +199,4 @@ def split_test(train_split, test_split, sig_id, vae_sig_type, verbose=True):
         assert test_pass, "[TEST FAILURE] split_test() did not pass."
 
 if __name__ == "__main__":
-    pass 
-    # x_train, y_train, x_test, y_test = load_clean_train_test(vae_sig_type='genuine', sig_id=1, id_as_label=False, frac=0.5, random_state=4)
+    pass
