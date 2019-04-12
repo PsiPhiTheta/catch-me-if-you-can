@@ -14,7 +14,7 @@ import viz_utils
 
 
 PATH_SAVE = 'data/clean/'
-PATH_TRAIN = 'data/clean/train-dutch-offline.pkl'
+PATH_ALL = 'data/clean/train-dutch-offline.pkl'
 PATH_TRAIN_GENUINE = 'data/clean/train-dutch-offline-genuine.npy'
 PATH_TRAIN_FORGERIES = 'data/clean/train-dutch-offline-forgeries.npy'
 
@@ -246,5 +246,5 @@ if __name__ == '__main__':
 
     files = fetch_all_raw()
 
-    # batch_preprocess(files, PATH_TRAIN, final_res, padding)
-    batch_preprocess_aug(files, PATH_TRAIN, final_res, padding, aug_size)
+    # batch_preprocess(files, PATH_ALL, final_res, padding)
+    batch_preprocess_aug(files, PATH_ALL, final_res, padding, aug_size)

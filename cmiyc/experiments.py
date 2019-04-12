@@ -45,16 +45,22 @@ class Experiment():
         self.write_to_txt(output)
 
     def load_data(self):
-        # Load data
-        x, y = dataset_utils.load_clean_train(sig_type='all',
+        # Get the original test set - the stuff that wasn't used to train the VAE.
+        '''
+        TODO: wasteful to be calling this here,
+        ideally we should move this data loading call outside into a loop
+        that wraps the Vae training and the Experiments
+        But this will do for now
+        '''
+        _x_train, _y_train, _x_test, _y_test = dataset_utils.load_clean_train_test(vae_sig_type=self.trained_on,
                                               sig_id=self.sig_id,
                                               id_as_label=False)
 
         # Encode the signatures
-        x = self.vanilla_vae.encoder.predict(x)
+        x = self.vanilla_vae.encoder.predict(_x_test)
 
         # Split data
-        x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2)
+        x_train, x_test, y_train, y_test = train_test_split(x, _y_test, test_size=0.2)
         # print(x_train.shape, x_train, y_train.shape, y_train)
 
         self.x_train = x_train
