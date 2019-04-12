@@ -38,9 +38,9 @@ class Experiment():
 
         self.classifier_type = args['classifier']
         self.clf = None
-        self.fit_clf()
+        self.fit_clf(classifier=self.classifier_type)
 
-        output = self.get_output()
+        output = self.get_output(print_output=args['print_output'])
 
         self.write_to_txt(output)
 
@@ -68,7 +68,7 @@ class Experiment():
         self.y_train = y_train
         self.y_test  = y_test
 
-    def fit_clf(self, classifier='tree'):
+    def fit_clf(self, classifier='forest'):
 
         # Create and fit the classifier
         if classifier == 'tree':
@@ -94,8 +94,8 @@ class Experiment():
         y_pred = self.clf.predict(self.x_test)
 
         ## AUC
-        y_pred = self.clf.predict_proba(self.x_test)[:, 1]
-        fpr_keras, tpr_keras, thresholds_keras = metrics.roc_curve(self.y_test, y_pred)
+        y_proba = self.clf.predict_proba(self.x_test)[:, 1]
+        fpr_keras, tpr_keras, thresholds_keras = metrics.roc_curve(self.y_test, y_proba)
         auc_keras = metrics.auc(fpr_keras, tpr_keras)
 
         output = {
@@ -134,7 +134,7 @@ class Experiment():
 
         return output
 
-    def plot_AUC(self, fpr_keras, tpr_keras, auc_keras, classifier, save_img=True):
+    def plot_AUC(self, fpr_keras, tpr_keras, auc_keras, classifier, save_img=False):
         plt.figure(1)
         plt.plot([0, 1], [0, 1], 'k--')
         plt.plot(fpr_keras, tpr_keras, label=(classifier, '(area = {:.3f})'.format(auc_keras)))
@@ -164,8 +164,7 @@ class Experiment():
             self.classifier_type,
             self.args['image_res'],
             self.args['intermediate_dim'],
-            self.args['latent_dim']
-            )
+            self.args['latent_dim'])
 
         with open(file, 'a') as fn:
             fn.write(str(output))
@@ -182,7 +181,8 @@ if __name__ == '__main__':
         'image_res':  128,
         'intermediate_dim': 512,
         'latent_dim': 256,
-        'save_dir': 'saved-models/models_genuine_sigid1_res128_id512_ld256_epoch250.h5'
+        'save_dir': 'saved-models/models_genuine_sigid1_res128_id512_ld256_epoch250.h5',
+        'print_output': True
     }
 
     exp = Experiment(args)
