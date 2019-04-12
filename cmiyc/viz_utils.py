@@ -136,9 +136,9 @@ if __name__ == '__main__':
     vanilla_vae.load_weights(save_dir)
 
     # Load data
-    x, y = dataset_utils.load_clean_train(sig_type='all',
-                                          sig_id=sig_id,
-                                          id_as_label=False)
+    x, y = dataset_utils.load_clean_train(sig_type='genuine',
+                                          sig_id=[1, 2, 3, 4],
+                                          id_as_label=True)
 
     # Viz t-SNE
     encode_plot_tsne(x, y, vanilla_vae.encoder)
