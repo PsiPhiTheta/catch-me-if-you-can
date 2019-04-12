@@ -68,12 +68,10 @@ class VanillaVae():
         kl_loss = -0.5 * K.sum(kl_loss, axis=-1)
         return K.mean(reconstruction_loss + kl_loss)
 
-    def get_data(self, sig_id=1, sig_type='genuine'):
+    def load_data(self, sig_id=1, sig_type='genuine'):
         '''
         Load the specified sig id and signature type.
-        '''
-
-        '''
+        
         TODO: again, wasteful to be calling this here.
         Move to outside loop later.
         '''
@@ -200,7 +198,7 @@ def train_all_sigs(sig_type='genuine', epochs=250, frac=0.5, seed=4):
         vanilla_vae = VanillaVae(image_res*image_res, intermediate_dim, latent_dim)
 
         # Get training data
-        vanilla_vae.get_data(sig_id, sig_type)
+        vanilla_vae.load_data(sig_id, sig_type)
 
         # Train
         history = vanilla_vae.fit(val_frac, epochs, batch_size, save_dir, fn)
@@ -247,7 +245,7 @@ if __name__ == '__main__':
     vanilla_vae = VanillaVae(image_res*image_res, intermediate_dim, latent_dim)
 
     # Get training data
-    vanilla_vae.get_data(sig_id, sig_type)
+    vanilla_vae.load_data(sig_id, sig_type)
 
     # Train
     history = vanilla_vae.fit(val_frac, epochs, batch_size, save_dir, fn)
