@@ -100,7 +100,7 @@ def load_clean_train_test(vae_sig_type='genuine', sig_id=1, id_as_label='false',
 
     return x_train, y_train, x_test, y_test
 
-def get_sig_ids(sig_type='genuine', mode='folder'):
+def get_sig_ids(sig_type='genuine', mode='all'):
     '''
     Get a list of training sig_ids to use when training all our VAEs.
 
