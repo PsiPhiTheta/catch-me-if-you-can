@@ -68,21 +68,7 @@ class VanillaVae():
         kl_loss = -0.5 * K.sum(kl_loss, axis=-1)
         return K.mean(reconstruction_loss + kl_loss)
 
-    def load_data(self, sig_id=1, sig_type='genuine'):
-        '''
-        Load the specified sig id and signature type.
-        
-        TODO: again, wasteful to be calling this here.
-        Move to outside loop later.
-        '''
-        x_train, y_train, x_test, y_test = dataset_utils.load_clean_train_test(vae_sig_type=sig_type,
-                                                      sig_id=sig_id,
-                                                      id_as_label=False)
-
-        self.x_train = x_train
-        self.y_train = y_train
-
-    def fit(self, val_split, epochs, batch_size, save_dir=None, fn=None):
+    def fit(self, x_train, val_split, epochs, batch_size, save_dir=None, fn=None):
         """ Train the model and save the weights if a `save_dir` is set.
         """
         if save_dir:
@@ -99,7 +85,7 @@ class VanillaVae():
 
         start = time.time()
 
-        history = self.vae.fit(self.x_train,
+        history = self.vae.fit(x_train,
                      epochs=epochs,
                      batch_size=batch_size,
                      validation_split=val_split,
@@ -230,10 +216,13 @@ if __name__ == '__main__':
     vanilla_vae = VanillaVae(image_res*image_res, intermediate_dim, latent_dim)
 
     # Get training data
-    vanilla_vae.load_data(sig_id, sig_type)
+    x_train, _, _, _ = dataset_utils.load_clean_train_test(
+        vae_sig_type=sig_type,
+        sig_id=sig_id,
+        id_as_label=False)
 
     # Train
-    history = vanilla_vae.fit(val_frac, epochs, batch_size, save_dir, fn)
+    history = vanilla_vae.fit(x_train, val_frac, epochs, batch_size, save_dir, fn)
 
     # # Plot the losses after training
     # viz_utils.plot_history(history)
