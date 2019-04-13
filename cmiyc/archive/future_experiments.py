@@ -1,8 +1,5 @@
 import os
 
-from keras.losses import mse
-import keras.backend as K
-
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import RandomForestClassifier
@@ -12,9 +9,20 @@ from sklearn import metrics
 import matplotlib.pyplot as plt
 
 import dataset_utils
-import viz_utils
 from vanilla_vae import VanillaVae
 
+import numpy as np
+from keras_contrib import callbacks # from keras import callbacks won't work because v2.2.4 does not yet include this
+
+class LossHistory(callbacks.Callback):
+    '''
+    Class used to generate a callback which extracts the loss logs for the dataset
+    '''
+    def on_train_begin(self, logs={}):  # note that this overwrites a method inside keras.callback
+        self.losses = []
+
+    def on_batch_end(self, batch, logs={}): # note that this overwrites a method inside keras.callback
+        self.losses.append(logs.get('loss'))
 
 class Experiment():
     '''
@@ -39,7 +47,6 @@ class Experiment():
         self.y_train = None
         self.y_test  = None
         self.losses  = None
-        self.image_res = args['image_res']
 
         self.load_data()
 
@@ -63,16 +70,17 @@ class Experiment():
                                               sig_id=self.sig_id,
                                               id_as_label=False)
 
-        # Encode the signatures & extract the losses
+        # Encode the signatures
         x_encoded = self.vanilla_vae.encoder.predict(_x_test)
 
         # Extract the losses from each input image
-        x_reconstructed = self.vanilla_vae.decoder.predict(x_encoded)
-        self.losses = (mse(_x_test, x_reconstructed) * self.image_res).eval(session=K.get_session()).reshape(-1, 1)
+        history = LossHistory()
+        self.vanilla_vae.vae.predict(_x_test, verbose=1, callbacks=[history])
+        self.losses = np.asarray(history.losses)
 
         # Split data
-        # x_train, x_test, y_train, y_test = train_test_split(x_encoded, _y_test, test_size=0.2)  # use latent vector
-        x_train, x_test, y_train, y_test = train_test_split(self.losses, _y_test, test_size=0.2)  # use recon_loss
+        # x_train, x_test, y_train, y_test = train_test_split(x_encoded, _y_test, test_size=0.2)
+        x_train, x_test, y_train, y_test = train_test_split(self.losses, _y_test, test_size=0.2)
 
         self.x_train = x_train
         self.x_test  = x_test
@@ -198,15 +206,15 @@ if __name__ == '__main__':
 
     exp1 = Experiment(args)
 
-    args = {
-        'classifier': 'knn',
-        'sig_id': 1,
-        'trained_on': 'genuine',
-        'image_res': 128,
-        'intermediate_dim': 512,
-        'latent_dim': 256,
-        'save_dir': 'saved-models/models_genuine_sigid1_res128_id512_ld256_epoch250.h5',
-        'print_output': True
-    }
-
-    exp2 = Experiment(args)
+    # args = {
+    #     'classifier': 'knn',
+    #     'sig_id': 1,
+    #     'trained_on': 'genuine',
+    #     'image_res': 128,
+    #     'intermediate_dim': 512,
+    #     'latent_dim': 256,
+    #     'save_dir': 'saved-models/models_genuine_sigid1_res128_id512_ld256_epoch250.h5',
+    #     'print_output': True
+    # }
+    #
+    # exp2 = Experiment(args)
