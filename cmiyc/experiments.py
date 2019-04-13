@@ -309,4 +309,4 @@ if __name__ == '__main__':
 
     print('The average accuracy is:', average_acc)
     print('The average recall is:', average_rec)
-    print('The average F1 score is:', average_F1) 
+    print('The average F1 score is:', average_F1)
