@@ -26,8 +26,8 @@ class Experiment():
     def __init__(self, args):
         self.args = args
         self.vanilla_vae = VanillaVae(
-            args['image_res']*args['image_res'], 
-            args['intermediate_dim'], 
+            args['image_res']*args['image_res'],
+            args['intermediate_dim'],
             args['latent_dim'])
         self.vanilla_vae.load_weights(args['save_dir'])
 
@@ -72,7 +72,9 @@ class Experiment():
 
         # Split data
         # x_train, x_test, y_train, y_test = train_test_split(x_encoded, _y_test, test_size=0.2)  # use latent vector
-        x_train, x_test, y_train, y_test = train_test_split(self.losses, _y_test, test_size=0.2)  # use recon_loss
+        # x_train, x_test, y_train, y_test = train_test_split(self.losses, _y_test, test_size=0.2)  # use recon_loss
+        x_reconstructed[:, :-1] = self.losses # use both
+        x_train, x_test, y_train, y_test = train_test_split(x_reconstructed, _y_test, test_size=0.2) # use both
 
         self.x_train = x_train
         self.x_test  = x_test
@@ -132,15 +134,15 @@ class Experiment():
             print('False positive rates for each possible threshold:', output['fpr_keras'])
             print('True positive rates for each possible threshold:', output['tpr_keras'])
             print('AUC:', output['auc_keras'])
-            
+
             save_img = True
             self.plot_AUC(
-                output['fpr_keras'], 
-                output['tpr_keras'], 
-                output['auc_keras'], 
+                output['fpr_keras'],
+                output['tpr_keras'],
+                output['auc_keras'],
                 self.classifier_type,
                 save_img=save_img)
-            
+
             print('')
 
         return output
@@ -149,7 +151,7 @@ class Experiment():
         plt.figure(1)
         plt.plot([0, 1], [0, 1], 'k--')
         plt.plot(fpr_keras, tpr_keras, label=(classifier, '(area = {:.3f})'.format(auc_keras)))
-        plt.xlabel('False positive rate') 
+        plt.xlabel('False positive rate')
         plt.ylabel('True positive rate')
         plt.title('ROC curve')
         plt.legend(loc='best')
