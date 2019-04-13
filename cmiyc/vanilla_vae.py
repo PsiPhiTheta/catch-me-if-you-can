@@ -1,25 +1,24 @@
 import os
 import time
 import pickle
-import random
 
 from keras.models import Model
 from keras.layers import Input, Dense, Lambda
-from keras.losses import binary_crossentropy, mse
+from keras.losses import mse
 from keras.callbacks import ModelCheckpoint
-import matplotlib.pyplot as plt
 import keras.backend as K
-import numpy as np
 
 import dataset_utils
 import viz_utils
-
-
 
 class VanillaVae():
     SAVE_DIR = 'saved-models/'
 
     def __init__(self, input_dim, intermediate_dim, latent_dim):
+
+        self.recon_loss = None
+        self.kl_loss = None
+        self.total_loss = None
 
         # Encoder
         inputs = Input(shape=(input_dim, ))
@@ -59,14 +58,14 @@ class VanillaVae():
         epsilon = K.random_normal(shape=(batch_size, latent_dim))
         return z_mean + K.exp(0.5 * z_log_sigma) * epsilon
 
-    @staticmethod
-    def vae_loss(inputs, outputs, original_dim, z_mean, z_log_var):
+    def vae_loss(self, inputs, outputs, original_dim, z_mean, z_log_var):
         """ VAE loss = mse_loss (reconstruction) + kl_loss
         """
-        reconstruction_loss = mse(inputs, outputs) * original_dim
+        self.recon_loss = mse(inputs, outputs) * original_dim
         kl_loss = 1 + z_log_var - K.square(z_mean) - K.exp(z_log_var)
-        kl_loss = -0.5 * K.sum(kl_loss, axis=-1)
-        return K.mean(reconstruction_loss + kl_loss)
+        self.kl_loss = -0.5 * K.sum(kl_loss, axis=-1)
+        self.total_loss = K.mean(self.recon_loss + self.kl_loss)
+        return self.total_loss
 
     def load_data(self, sig_id=1, sig_type='genuine'):
         '''
@@ -214,7 +213,7 @@ if __name__ == '__main__':
     intermediate_dim = 512
     latent_dim = 256
     val_frac = 0.1
-    epochs = 250
+    epochs = 100
     batch_size = 32
     save_dir = VanillaVae.SAVE_DIR
     fn = 'models_{}_sigid{}_res{}_id{}_ld{}_epoch{}.h5'.format(
