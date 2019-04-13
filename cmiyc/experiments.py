@@ -34,6 +34,11 @@ class Experiment():
         self.sig_id = args['sig_id']
         self.trained_on = args['trained_on']
 
+        self.acc = None
+        self.recal = None
+        self.F1 = None
+        self.auc_keras = None
+
         self.x_train = None
         self.x_test  = None
         self.y_train = None
@@ -71,10 +76,10 @@ class Experiment():
         self.losses = (mse(_x_test, x_reconstructed) * self.image_res).eval(session=K.get_session()).reshape(-1, 1)
 
         # Split data
-        # x_train, x_test, y_train, y_test = train_test_split(x_encoded, _y_test, test_size=0.2)  # use latent vector
+        x_train, x_test, y_train, y_test = train_test_split(x_encoded, _y_test, test_size=0.2)  # use latent vector
         # x_train, x_test, y_train, y_test = train_test_split(self.losses, _y_test, test_size=0.2)  # use recon_loss
-        x_reconstructed[:, :-1] = self.losses # use both
-        x_train, x_test, y_train, y_test = train_test_split(x_reconstructed, _y_test, test_size=0.2) # use both
+        # x_reconstructed[:, :-1] = self.losses # use both
+        # x_train, x_test, y_train, y_test = train_test_split(x_reconstructed, _y_test, test_size=0.2) # use both
 
         self.x_train = x_train
         self.x_test  = x_test
@@ -109,18 +114,22 @@ class Experiment():
         ## AUC
         y_proba = self.clf.predict_proba(self.x_test)[:, 1]
         fpr_keras, tpr_keras, thresholds_keras = metrics.roc_curve(self.y_test, y_proba)
-        auc_keras = metrics.auc(fpr_keras, tpr_keras)
+        self.auc_keras = metrics.auc(fpr_keras, tpr_keras)
+
+        self.acc = metrics.accuracy_score(self.y_test, y_pred)
+        self.recal = metrics.recall_score(self.y_test, y_pred)
+        self.F1 = metrics.f1_score(self.y_test, y_pred)
 
         output = {
             'sig_id':     self.sig_id,
             'trained_on': self.trained_on,
-            'accuracy':   metrics.accuracy_score(self.y_test, y_pred),
-            'recall':     metrics.recall_score(self.y_test, y_pred),
-            'f1':         metrics.f1_score(self.y_test, y_pred),
+            'accuracy':   self.acc,
+            'recall':     self.recal,
+            'f1':         self.F1,
             'fpr_keras':  fpr_keras,
             'tpr_keras':  tpr_keras,
             'thresholds_keras': thresholds_keras,
-            'auc_keras':        auc_keras
+            'auc_keras':        self.auc_keras
         }
 
         if print_output:
@@ -187,28 +196,117 @@ class Experiment():
 
 if __name__ == '__main__':
 
-    args = {
-        'classifier': 'forest',
-        'sig_id':     1,
-        'trained_on': 'genuine',
-        'image_res':  128,
-        'intermediate_dim': 512,
-        'latent_dim': 256,
-        'save_dir': 'saved-models/models_genuine_sigid1_res128_id512_ld256_epoch250.h5',
-        'print_output': True
-    }
+    forest_results = []
+    knn_results = []
 
-    exp1 = Experiment(args)
+    # should loop through all sigs avoiding missing ones
 
-    args = {
-        'classifier': 'knn',
-        'sig_id': 1,
-        'trained_on': 'genuine',
-        'image_res': 128,
-        'intermediate_dim': 512,
-        'latent_dim': 256,
-        'save_dir': 'saved-models/models_genuine_sigid1_res128_id512_ld256_epoch250.h5',
-        'print_output': True
-    }
+    for i in range(1,5):
 
-    exp2 = Experiment(args)
+        args = {
+            'classifier': 'forest',
+            'sig_id':     i,
+            'trained_on': 'genuine',
+            'image_res':  128,
+            'intermediate_dim': 512,
+            'latent_dim': 256,
+            'save_dir': 'saved-models/models_genuine_sigid{}_res128_id512_ld256_epoch250.h5'.format(i),
+            'print_output': True
+        }
+
+        forest_results.append(Experiment(args))
+
+        args = {
+            'classifier': 'knn',
+            'sig_id': i,
+            'trained_on': 'genuine',
+            'image_res': 128,
+            'intermediate_dim': 512,
+            'latent_dim': 256,
+            'save_dir': 'saved-models/models_genuine_sigid{}_res128_id512_ld256_epoch250.h5'.format(i),
+            'print_output': True
+        }
+
+        knn_results.append(Experiment(args))
+
+        plt.clf()
+
+    for i in range(6,7):
+
+        args = {
+            'classifier': 'forest',
+            'sig_id':     i,
+            'trained_on': 'genuine',
+            'image_res':  128,
+            'intermediate_dim': 512,
+            'latent_dim': 256,
+            'save_dir': 'saved-models/models_genuine_sigid{}_res128_id512_ld256_epoch250.h5'.format(i),
+            'print_output': True
+        }
+
+        forest_results.append(Experiment(args))
+
+        args = {
+            'classifier': 'knn',
+            'sig_id': i,
+            'trained_on': 'genuine',
+            'image_res': 128,
+            'intermediate_dim': 512,
+            'latent_dim': 256,
+            'save_dir': 'saved-models/models_genuine_sigid{}_res128_id512_ld256_epoch250.h5'.format(i),
+            'print_output': True
+        }
+
+        knn_results.append(Experiment(args))
+
+        plt.clf()
+
+    for i in range(12,70):
+
+        args = {
+            'classifier': 'forest',
+            'sig_id':     i,
+            'trained_on': 'genuine',
+            'image_res':  128,
+            'intermediate_dim': 512,
+            'latent_dim': 256,
+            'save_dir': 'saved-models/models_genuine_sigid{}_res128_id512_ld256_epoch250.h5'.format(i),
+            'print_output': True
+        }
+
+        forest_results.append(Experiment(args))
+
+        args = {
+            'classifier': 'knn',
+            'sig_id': i,
+            'trained_on': 'genuine',
+            'image_res': 128,
+            'intermediate_dim': 512,
+            'latent_dim': 256,
+            'save_dir': 'saved-models/models_genuine_sigid{}_res128_id512_ld256_epoch250.h5'.format(i),
+            'print_output': True
+        }
+
+        knn_results.append(Experiment(args))
+
+        plt.clf()
+
+    average_acc = 0
+    average_rec = 0
+    average_F1 = 0
+
+    for i in range(len(forest_results)):
+        average_acc += forest_results[i].acc
+        average_rec += forest_results[i].recal
+        average_F1 += forest_results[i].F1
+        average_acc += knn_results[i].acc
+        average_rec += knn_results[i].recal
+        average_F1 += knn_results[i].F1
+
+    average_acc /= (len(forest_results)*2)
+    average_rec /= (len(forest_results)*2)
+    average_F1 /= (len(forest_results)*2)
+
+    print('The average accuracy is:', average_acc)
+    print('The average recall is:', average_rec)
+    print('The average F1 score is:', average_F1)
