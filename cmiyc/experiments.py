@@ -347,7 +347,7 @@ if __name__ == '__main__':
         average_acc, average_rec, average_F1, total_average_acc, total_average_rec, total_average_F1 = pickle.load(
             f)
 
-    for i in range(36, 70):
+    for i in range(35, 70):
         args = {
             'classifier': 'forest',
             'sig_id': i,
@@ -408,6 +408,6 @@ if __name__ == '__main__':
                      total_average_rec,
                      total_average_F1], f)
 
-    # to load 
+    # to load
     with open(filename, 'rb') as f:
         average_acc, average_rec, average_F1, total_average_acc, total_average_rec, total_average_F1 = pickle.load(f)
