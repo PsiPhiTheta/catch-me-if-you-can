@@ -11,6 +11,8 @@ from sklearn import metrics
 
 import matplotlib.pyplot as plt
 
+import pickle
+
 import dataset_utils
 import viz_utils
 from vanilla_vae import VanillaVae
@@ -196,8 +198,13 @@ class Experiment():
 
 if __name__ == '__main__':
 
-    forest_results = []
-    knn_results = []
+    average_acc = []
+    average_rec = []
+    average_F1 = []
+    total_average_acc = 0
+    total_average_rec = 0
+    total_average_F1 = 0
+    filename = 'exp_outputs/pickle/vars'
 
     # should loop through all sigs avoiding missing ones
 
@@ -214,7 +221,10 @@ if __name__ == '__main__':
             'print_output': True
         }
 
-        forest_results.append(Experiment(args))
+        exp1 = Experiment(args)
+        average_acc.append(exp1.acc)
+        average_rec.append(exp1.recal)
+        average_F1.append(exp1.F1)
 
         args = {
             'classifier': 'knn',
@@ -227,7 +237,18 @@ if __name__ == '__main__':
             'print_output': True
         }
 
-        knn_results.append(Experiment(args))
+        exp2 = Experiment(args)
+        average_acc.append(exp2.acc)
+        average_rec.append(exp2.recal)
+        average_F1.append(exp2.F1)
+
+        with open(filename, 'wb') as f:
+            pickle.dump([average_acc,
+                         average_rec,
+                         average_F1,
+                         total_average_acc,
+                         total_average_rec,
+                         total_average_F1], f)
 
         plt.clf()
 
@@ -244,7 +265,10 @@ if __name__ == '__main__':
             'print_output': True
         }
 
-        forest_results.append(Experiment(args))
+        exp1 = Experiment(args)
+        average_acc.append(exp1.acc)
+        average_rec.append(exp1.recal)
+        average_F1.append(exp1.F1)
 
         args = {
             'classifier': 'knn',
@@ -257,11 +281,25 @@ if __name__ == '__main__':
             'print_output': True
         }
 
-        knn_results.append(Experiment(args))
+        exp2 = Experiment(args)
+        average_acc.append(exp2.acc)
+        average_rec.append(exp2.recal)
+        average_F1.append(exp2.F1)
+
+        with open(filename, 'wb') as f:
+            pickle.dump([average_acc,
+                         average_rec,
+                         average_F1,
+                         total_average_acc,
+                         total_average_rec,
+                         total_average_F1], f)
 
         plt.clf()
 
-    for i in range(12,70):
+    with open(filename, 'rb') as f:
+        average_acc, average_rec, average_F1, total_average_acc, total_average_rec, total_average_F1 = pickle.load(f)
+
+    for i in range(12,35):
 
         args = {
             'classifier': 'forest',
@@ -274,7 +312,10 @@ if __name__ == '__main__':
             'print_output': True
         }
 
-        forest_results.append(Experiment(args))
+        exp1 = Experiment(args)
+        average_acc.append(exp1.acc)
+        average_rec.append(exp1.recal)
+        average_F1.append(exp1.F1)
 
         args = {
             'classifier': 'knn',
@@ -287,26 +328,86 @@ if __name__ == '__main__':
             'print_output': True
         }
 
-        knn_results.append(Experiment(args))
+        exp2 = Experiment(args)
+        average_acc.append(exp2.acc)
+        average_rec.append(exp2.recal)
+        average_F1.append(exp2.F1)
+
+        with open(filename, 'wb') as f:
+            pickle.dump([average_acc,
+                         average_rec,
+                         average_F1,
+                         total_average_acc,
+                         total_average_rec,
+                         total_average_F1], f)
 
         plt.clf()
 
-    average_acc = 0
-    average_rec = 0
-    average_F1 = 0
+    with open(filename, 'rb') as f:
+        average_acc, average_rec, average_F1, total_average_acc, total_average_rec, total_average_F1 = pickle.load(
+            f)
 
-    for i in range(len(forest_results)):
-        average_acc += forest_results[i].acc
-        average_rec += forest_results[i].recal
-        average_F1 += forest_results[i].F1
-        average_acc += knn_results[i].acc
-        average_rec += knn_results[i].recal
-        average_F1 += knn_results[i].F1
+    for i in range(36, 70):
+        args = {
+            'classifier': 'forest',
+            'sig_id': i,
+            'trained_on': 'genuine',
+            'image_res': 128,
+            'intermediate_dim': 512,
+            'latent_dim': 256,
+            'save_dir': 'saved-models/models_genuine_sigid{}_res128_id512_ld256_epoch250.h5'.format(i),
+            'print_output': True
+        }
 
-    average_acc /= (len(forest_results)*2)
-    average_rec /= (len(forest_results)*2)
-    average_F1 /= (len(forest_results)*2)
+        exp1 = Experiment(args)
+        average_acc.append(exp1.acc)
+        average_rec.append(exp1.recal)
+        average_F1.append(exp1.F1)
 
-    print('The average accuracy is:', average_acc)
-    print('The average recall is:', average_rec)
-    print('The average F1 score is:', average_F1)
+        args = {
+            'classifier': 'knn',
+            'sig_id': i,
+            'trained_on': 'genuine',
+            'image_res': 128,
+            'intermediate_dim': 512,
+            'latent_dim': 256,
+            'save_dir': 'saved-models/models_genuine_sigid{}_res128_id512_ld256_epoch250.h5'.format(i),
+            'print_output': True
+        }
+
+        exp2 = Experiment(args)
+        average_acc.append(exp2.acc)
+        average_rec.append(exp2.recal)
+        average_F1.append(exp2.F1)
+
+        with open(filename, 'wb') as f:
+            pickle.dump([average_acc,
+                         average_rec,
+                         average_F1,
+                         total_average_acc,
+                         total_average_rec,
+                         total_average_F1], f)
+
+        plt.clf()
+
+
+    total_average_acc = sum(average_acc)/len(average_acc)
+    total_average_rec = sum(average_rec)/len(average_rec)
+    total_average_F1 = sum(average_F1)/len(average_F1)
+
+    print('The average accuracy is:', total_average_acc)
+    print('The average recall is:', total_average_rec)
+    print('The average F1 score is:', total_average_F1)
+
+    # to save
+    with open(filename, 'wb') as f:
+        pickle.dump([average_acc,
+                     average_rec,
+                     average_F1,
+                     total_average_acc,
+                     total_average_rec,
+                     total_average_F1], f)
+
+    # to load 
+    with open(filename, 'rb') as f:
+        average_acc, average_rec, average_F1, total_average_acc, total_average_rec, total_average_F1 = pickle.load(f)
