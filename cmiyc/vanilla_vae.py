@@ -65,7 +65,7 @@ class VanillaVae():
     def set_beta(self, beta):
         self.beta = beta
 
-    def vae_loss(self, inputs, outputs, original_dim, z_mean, z_log_var, beta):
+    def vae_loss(self, inputs, outputs, original_dim, z_mean, z_log_var):
         """ VAE loss = mse_loss (reconstruction) + kl_loss
         """
         self.recon_loss = mse(inputs, outputs) * original_dim
