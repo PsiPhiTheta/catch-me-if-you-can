@@ -2,6 +2,18 @@
 A custom class that overrides VanillaVae to test for posterior collapse.
 Tracks the MSE and KL portions of the loss separately
 And plots over the course of training.
+
+Uses a custom Keras callback, SplitReconKL, to track, save, and plot
+the two parts of the VAE loss.
+
+__main__ will kick off a loop that trains and saves weights for all
+signatures, as well as make loss plots and save the KL/recon/total losses
+over the course of training.
+
+Usage:
+
+python3 custom_vae.py
+
 '''
 
 import os
@@ -39,7 +51,7 @@ class SplitReconKL(Callback):
 	'''
 
 	SAVE_DIR = 'saved-models/loss_splits/'
-	THRESH = 0.000001
+	THRESH = 0.0001
 
 	def __init__(self, fn):
 		self.fn = fn
