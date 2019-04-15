@@ -105,11 +105,29 @@ def generate_from_random(decoder, latent_dim, image_res=128):
     plt.imshow(pred, cmap='gray')
     plt.show()
 
+
+def generate_from_random_variation(decoder, latent_dim, dim=0, n=10, image_res=128):
+    """
+    Sample at 0 and visualize effect of variation on given dimension.
+    """
+    figure = np.zeros((image_res, image_res * n))
+    sample = np.zeros((1, latent_dim))
+    variations = np.linspace(-4, 4, n)
+    for i, variation in enumerate(variations):
+        sample[0, dim] = variation
+        pred = decoder.predict(sample).reshape((image_res, image_res))
+        figure[:, i * image_res: (i + 1) * image_res] = pred
+    plt.figure()
+    plt.imshow(figure, cmap='gray')
+    plt.show()
+
+
 def plot_original_image(x_train):
     """
     Plots original input.
     """
     plt.imshow(x_train[0].reshape(128, 128), cmap='gray')
+
 
 def encode_plot_tsne(x, y, encoder):
     """
