@@ -93,6 +93,7 @@ class SplitReconKL(Callback):
 		print(data)
 		with open(SplitReconKL.SAVE_DIR + self.npyfn, 'wb') as npfile:
 			np.save(npfile, data)
+		print("Saved losses to {}".format(SplitReconKL.SAVE_DIR + self.npyfn))
 
 		# Save a stacked chart of the loss breakdown over time
 
@@ -116,6 +117,7 @@ class SplitReconKL(Callback):
 		plt.legend(loc='upper left')
 		if save_img:
 			plt.savefig(SplitReconKL.SAVE_DIR+self.imgfn)
+			print("Saved {}".format(SplitReconKL.SAVE_DIR+self.imgfn))
 		else:
 			plt.show()
 
@@ -257,10 +259,39 @@ class CustomVae(VanillaVae):
 			print("Saved final weights to {}".format(save_dir+fn))
 		return history
 
-def main():
-	# Parameters
-	args = {
-		'sig_id': 1,
+def train_all_sigs(sig_type='genuine', epochs=100, frac=0.5, seed=4):
+	'''
+	Similar to the original in VanillaVae.
+
+	Helper function to train and save VAE weights 
+	for a set of genuine training signatures.
+
+	Skips a signature if the associated weight file has already been created
+	in the anticipated directory.
+
+	Default seed=4 is set for reproducibility.
+	'''
+
+	if not os.path.exists(CustomVae.SAVE_DIR + 'logs/'):
+		os.makedirs(CustomVae.SAVE_DIR + 'logs/')
+
+	if not os.path.exists(CustomVae.SAVE_DIR + 'history/'):
+		os.makedirs(CustomVae.SAVE_DIR + 'history/')
+
+	sig_id_list = dataset_utils.get_sig_ids(sig_type='genuine')
+
+	# Save this list for reference later, in case we need it
+	# ts = time.strftime("%Y%m%d-%H%M%S")
+	# logfile = VanillaVae.SAVE_DIR + 'logs/' + 'train_sig_list_{}.txt'.format(ts)
+	# print("Made logfile at {}".format(logfile))
+
+	start = time.time()
+
+	for sig_id in sig_id_list:
+
+		# Parameters
+		args = {
+		'sig_id': sig_id,
 		'sig_type': 'genuine',
 		'image_res': 128,
 		'intermediate_dim': 512,
@@ -271,9 +302,9 @@ def main():
 		'save_dir': CustomVae.SAVE_DIR,
 		'recon_type': 'mse', # mse or xent
 		'beta': 1.0
-	}
+		}
 
-	args['fn'] = 'alt_models_{}_sigid{}_res{}_id{}_ld{}_epoch{}_{}_b{}.h5'.format(
+		args['fn'] = 'alt_models_{}_sigid{}_res{}_id{}_ld{}_epoch{}_{}_b{}.h5'.format(
 			args['sig_type'],
 			args['sig_id'],
 			args['image_res'], 
@@ -283,27 +314,56 @@ def main():
 			args['recon_type'],
 			str(args['beta']).replace('.', '_') 
 		)
-	
 
-	# Instantiate network
-	custom_vae = CustomVae(
-		args['image_res']*args['image_res'], 
-		args['intermediate_dim'], 
-		args['latent_dim'],
-		args['fn'],
-		args['recon_type'])
+		# Skip this sig_id if the weight file has already been created:
+		# Anticipating that this will take a long time to run,
+		# So make it easy to restart where we left off
+		weight_exists = os.path.isfile(CustomVae.SAVE_DIR+args['fn'])
+		if weight_exists:
+			print("{} already exists, skipping".format(args['fn']))
+			continue
 
-	# Get training data
-	custom_vae.load_data(args['sig_id'], args['sig_type'])
+		# Instantiate network
+		custom_vae = CustomVae(
+			args['image_res']*args['image_res'], 
+			args['intermediate_dim'], 
+			args['latent_dim'],
+			args['fn'],
+			args['recon_type'])
 
-	# Train
-	history = custom_vae.fit(
-		args['val_frac'], 
-		args['epochs'], 
-		args['batch_size'], 
-		args['save_dir'], 
-		args['fn']
+		# Get training data
+		custom_vae.load_data(args['sig_id'], args['sig_type'])
+
+		# Train
+		history = custom_vae.fit(
+			args['val_frac'], 
+			args['epochs'], 
+			args['batch_size'], 
+			args['save_dir'], 
+			args['fn']
 		)
+
+		# Write history to pickle in case we want it later
+		hist_pickle_filename = 'hist_alt_models_{}_sigid{}_res{}_id{}_ld{}_epoch{}_{}_b{}.h5'.format(
+			args['sig_type'],
+			args['sig_id'],
+			args['image_res'], 
+			args['intermediate_dim'],
+			args['latent_dim'],
+			args['epochs'],
+			args['recon_type'],
+			str(args['beta']).replace('.', '_') 
+		)
+		
+		with open(CustomVae.SAVE_DIR + 'history/' + hist_pickle_filename, 'wb') as fp:
+			pickle.dump(history.history, fp)
+		print("History saved to {}".format(CustomVae.SAVE_DIR + 'history/' + hist_pickle_filename))
+
+	print("train_all_sigs completed in {} sec".format(time.time()- start))
+
+def main():
+	
+	train_all_sigs()
 
 
 if __name__ == "__main__":
