@@ -39,6 +39,7 @@ class SplitReconKL(Callback):
 	'''
 
 	SAVE_DIR = 'saved-models/loss_splits/'
+	THRESH = 0.000001
 
 	def __init__(self, fn):
 		self.fn = fn
@@ -63,10 +64,9 @@ class SplitReconKL(Callback):
 		mse = logs.get('mse')
 		kl = logs.get('kl')
 
-		# Assert that kl + mse = total loss within some error as % of total,
-		# or else we have a problem
-		thresh = 0.000001
-		assert (mse + kl) - total < thresh * total, "Problem: recorded mse + kl != total loss, check SplitReconKL. ({} + {} != {})".format(mse, kl, total)
+		# Warn that kl + mse = total loss within some error as % of total
+		if (mse + kl) - total < SplitReconKL.THRESH * total: 
+			print("Problem: recorded mse + kl != total loss, check SplitReconKL. ({} + {} != {})".format(mse, kl, total))
 
 		self.total_losses.append(total)
 		self.recon_losses.append(mse)
