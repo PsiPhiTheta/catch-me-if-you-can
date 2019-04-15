@@ -9,7 +9,6 @@ from keras.callbacks import ModelCheckpoint
 import keras.backend as K
 from sklearn.model_selection import train_test_split
 
-
 import dataset_utils
 import data_augmentation
 import viz_utils
@@ -19,6 +18,10 @@ class VanillaVae():
     SAVE_DIR = 'saved-models/'
 
     def __init__(self, input_dim, intermediate_dim, latent_dim):
+
+        self.recon_loss = None
+        self.kl_loss = None
+        self.total_loss = None
 
         # Encoder
         inputs = Input(shape=(input_dim, ))
@@ -58,14 +61,14 @@ class VanillaVae():
         epsilon = K.random_normal(shape=(batch_size, latent_dim))
         return z_mean + K.exp(0.5 * z_log_sigma) * epsilon
 
-    @staticmethod
-    def vae_loss(inputs, outputs, original_dim, z_mean, z_log_var):
+    def vae_loss(self, inputs, outputs, original_dim, z_mean, z_log_var):
         """ VAE loss = mse_loss (reconstruction) + kl_loss
         """
-        reconstruction_loss = mse(inputs, outputs) * original_dim
+        self.recon_loss = mse(inputs, outputs) * original_dim
         kl_loss = 1 + z_log_var - K.square(z_mean) - K.exp(z_log_var)
-        kl_loss = -0.5 * K.sum(kl_loss, axis=-1)
-        return K.mean(reconstruction_loss + kl_loss)
+        self.kl_loss = -0.5 * K.sum(kl_loss, axis=-1)
+        self.total_loss = K.mean(self.recon_loss + self.kl_loss)
+        return self.total_loss
 
     def fit(self, x_train, val_split, epochs, batch_size, save_dir=None, fn=''):
         """ Train the model and save the weights if a `save_dir` is set.
