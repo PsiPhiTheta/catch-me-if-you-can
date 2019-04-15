@@ -1,11 +1,7 @@
 '''
-Some tests to see if we have posterior collapse.
-
-Idea: plot means of q(z|x) and see if it converges to p(z) over
-the course of training.
-
-Another idea: Set KL loss incredibly high 
-and see if classification outcomes are similar
+A custom class that overrides VanillaVae to test for posterior collapse.
+Tracks the MSE and KL portions of the loss separately
+And plots over the course of training.
 '''
 
 import os
@@ -23,6 +19,7 @@ from sklearn.model_selection import train_test_split
 
 import numpy as np
 import matplotlib.pyplot as plt
+import seaborn as sns
 
 import pickle
 import time
@@ -32,6 +29,29 @@ import viz_utils
 from vanilla_vae import VanillaVae
 
 class SplitReconKL(Callback):
+	'''
+	Custom callback to keep track of the Recon/KL split of the
+	total loss during training.
+
+	Generates an image at the end.
+
+	Saves info to a file for re-use too.
+	'''
+
+	SAVE_DIR = 'saved-models/loss_splits/'
+
+	def __init__(self, fn):
+		self.fn = fn
+		self.parse_fn()
+		super(SplitReconKL, self).__init__()
+
+	def parse_fn(self):
+		'''
+		Parse filenames - one to save to .npy, one to save an image
+		'''
+		self.npyfn = os.path.splitext(self.fn)[0]+'.npy'
+		self.imgfn = os.path.splitext(self.fn)[0]+'.png'
+
 	def on_train_begin(self, logs={}):
 		self.total_losses = []
 		self.recon_losses = []
@@ -52,13 +72,53 @@ class SplitReconKL(Callback):
 		self.recon_losses.append(mse)
 		self.kl_losses.append(kl)
 
-	def on_train_end(self):
+	def on_train_end(self, logs={}):
+		self.plot_and_save()
+
+	def plot_and_save(self, save_img=True):
 		'''
 		Make a plot of the breakdown of loss over time and save,
-		write data to a file so we can process it
+		write data to a file so we can further process it if we wish
 		'''
+		sns.set() # pretty seaborn styles
 
+		if not os.path.exists(SplitReconKL.SAVE_DIR):
+			os.makedirs(SplitReconKL.SAVE_DIR)
 		
+		# Save the three series to a .npy in case we want it later
+		data = np.array((
+			np.asarray(self.total_losses), 
+			np.asarray(self.recon_losses), 
+			np.asarray(self.kl_losses)))
+		print(data)
+		with open(SplitReconKL.SAVE_DIR + self.npyfn, 'wb') as npfile:
+			np.save(npfile, data)
+
+		# Save a stacked chart of the loss breakdown over time
+
+		# Generate a x spanning the number of epochs
+		epoch_n = data.shape[1]
+		x = np.linspace(1, epoch_n, epoch_n)
+		y1 = data[0,:] # total
+		y2 = data[1,:] # recon
+		y3 = data[2,:] # KL
+		
+		plt.figure(figsize=(10,8))
+		plt.stackplot(x, y2, y3, labels=['Reconstruction term','KL term'])
+		
+		plt.title("Training log-loss: Reconstruction vs KL term breakdown")
+		plt.xlabel("Epoch")
+		plt.xticks(np.arange(min(x), max(x)+1, 1))
+
+		plt.ylabel("Log-Loss")
+		plt.yscale("log")
+
+		plt.legend(loc='upper left')
+		if save_img:
+			plt.savefig(SplitReconKL.SAVE_DIR+self.imgfn)
+		else:
+			plt.show()
+
 class CustomVae(VanillaVae):
 	'''
 	An altered version of VanillaVae that allows us to investigate:
@@ -68,7 +128,7 @@ class CustomVae(VanillaVae):
 	- try using different values to weight the recon loss vs KL div, if time	
 	'''
 
-	def __init__(self, input_dim, intermediate_dim, latent_dim, recon_type='mse', beta=1.0):
+	def __init__(self, input_dim, intermediate_dim, latent_dim, fn, recon_type='mse', beta=1.0):
 
 		self.recon_loss = None
 		self.kl_loss = None
@@ -79,6 +139,8 @@ class CustomVae(VanillaVae):
 
 		self.z_mean = None
 		self.z_log_var = None
+
+		self.fn = fn
 
 		# Encoder
 		inputs = Input(shape=(input_dim, ))
@@ -150,27 +212,6 @@ class CustomVae(VanillaVae):
 		self.total_loss = K.mean(self.recon_loss + self.beta * self.kl_loss)
 		return self.total_loss
 
-	def loss_wrapper(self, inputs, outputs, original_dim, z_mean, z_log_var):
-		'''
-		A wrapper for the VAE loss
-		So we can save the recon portion and the KL portion
-		Separately to history.
-		'''
-
-		""" VAE loss = mse_loss (reconstruction) + kl_loss
-		"""
-		
-		kl_loss = 1 + z_log_var - K.square(z_mean) - K.exp(z_log_var)
-		kl_loss = -0.5 * K.sum(kl_loss, axis=-1)
-
-		def seq2seq_loss(input, output):
-			""" Final loss calculation function to be passed to optimizer"""
-			# Reconstruction loss
-			recon_loss = mse(inputs, outputs) * original_dim
-			total_loss = K.mean(recon_loss + kl_loss)
-			
-		return seq2seq_loss
-
 	def fit(self, val_split, epochs, batch_size, save_dir=None, fn=None):
 		""" Train the model and save the weights if a `save_dir` is set.
 		"""
@@ -182,7 +223,7 @@ class CustomVae(VanillaVae):
 		
 		# Custom callback to keep track of KL and Recon loss split
 		# during training
-		split_recon_kl = SplitReconKL()
+		split_recon_kl = SplitReconKL(fn=self.fn)
 		
 		# Setup checkpoint to save best model
 		callbacks = [
@@ -240,7 +281,7 @@ def main():
 			args['latent_dim'],
 			args['epochs'],
 			args['recon_type'],
-			args['beta'] 
+			str(args['beta']).replace('.', '_') 
 		)
 	
 
@@ -249,6 +290,7 @@ def main():
 		args['image_res']*args['image_res'], 
 		args['intermediate_dim'], 
 		args['latent_dim'],
+		args['fn'],
 		args['recon_type'])
 
 	# Get training data
@@ -262,8 +304,6 @@ def main():
 		args['save_dir'], 
 		args['fn']
 		)
-
-	print(history.history)
 
 
 if __name__ == "__main__":
