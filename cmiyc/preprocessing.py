@@ -240,10 +240,10 @@ def batch_preprocess_aug(files_list, dest_file, final_res, padding, aug_size):
 if __name__ == '__main__':
 
     final_res = 128
-    aug_size = 32
+    aug_size = 16
     padding = True
 
     files = fetch_all_raw()
 
-    batch_preprocess(files, PATH_ALL, final_res, padding)
-    # batch_preprocess_aug(files, PATH_ALL, final_res, padding, aug_size)
+    # batch_preprocess(files, PATH_ALL, final_res, padding)
+    batch_preprocess_aug(files, PATH_ALL, final_res, padding, aug_size)
