@@ -109,6 +109,13 @@ class SplitReconKL(Callback):
 		
 		plt.title("Training log-loss: Reconstruction vs KL term breakdown")
 		plt.xlabel("Epoch")
+		if epoch_n < 20:
+			x_tick_interval = 1
+		elif epoch_n <= 100:
+			x_tick_interval = 5
+		else:
+			x_tick_interval = 10
+			
 		plt.xticks(np.arange(min(x), max(x)+1, 1))
 
 		plt.ylabel("Log-Loss")
