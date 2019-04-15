@@ -16,15 +16,18 @@ def train_beta_models(args):
         # Instantiate network and set beta param
         vanilla_vae = VanillaVae(args['image_res']**2, args['intermediate_dim'],
                                  args['latent_dim'])
-        vanilla_vae.set_beta(args['beta'])
+        vanilla_vae.set_beta(beta)
+
+        fn = args['fn'].format(
+            args['sig_type'], args['sig_id'], args['image_res'],
+            args['intermediate_dim'], args['latent_dim'], args['epochs'],
+            beta)
 
         history = vanilla_vae.fit(x_train, args['val_split'], args['epochs'],
-                                  args['batch_size'], args['save_dir'],
-                                  args['fn'])
+                                  args['batch_size'], args['save_dir'], fn)
 
 
 def visualize_samples_from_beta_models(args):
-    betas = [0.25, 0.5, 1, 1.25, 1.5, 1.75, 2]
     for beta in args['betas']:
 
         # Instantiate network and set beta param
@@ -58,9 +61,10 @@ if __name__ == '__main__':
         'batch_size': 32,
         'epochs': 50,
         'save_dir': VanillaVae.SAVE_DIR,
-        'betas': [0.25, 0.5, 1, 1.25, 1.5, 1.75, 2],
+        # 'betas': [0.25, 0.5, 1, 1.25, 1.5, 1.75, 2],
+        'betas': [5, 10, 15, 20],
         'fn': 'models_{}_sigid{}_res{}_id{}_ld{}_epoch{}_beta{}.h5'
     }
 
-    # train_beta_models(args)
+    train_beta_models(args)
     visualize_samples_from_beta_models(args)
