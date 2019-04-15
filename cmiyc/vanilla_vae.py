@@ -22,6 +22,7 @@ class VanillaVae():
         self.recon_loss = None
         self.kl_loss = None
         self.total_loss = None
+        self.beta = 1  # Beta that controls disentanglement
 
         # Encoder
         inputs = Input(shape=(input_dim, ))
@@ -61,13 +62,16 @@ class VanillaVae():
         epsilon = K.random_normal(shape=(batch_size, latent_dim))
         return z_mean + K.exp(0.5 * z_log_sigma) * epsilon
 
-    def vae_loss(self, inputs, outputs, original_dim, z_mean, z_log_var):
+    def set_beta(self, beta):
+        self.beta = beta
+
+    def vae_loss(self, inputs, outputs, original_dim, z_mean, z_log_var, beta):
         """ VAE loss = mse_loss (reconstruction) + kl_loss
         """
         self.recon_loss = mse(inputs, outputs) * original_dim
         kl_loss = 1 + z_log_var - K.square(z_mean) - K.exp(z_log_var)
         self.kl_loss = -0.5 * K.sum(kl_loss, axis=-1)
-        self.total_loss = K.mean(self.recon_loss + self.kl_loss)
+        self.total_loss = K.mean(self.recon_loss + self.beta*self.kl_loss)
         return self.total_loss
 
     def fit(self, x_train, val_split, epochs, batch_size, save_dir=None, fn=''):
@@ -148,19 +152,17 @@ class VanillaVae():
             print("Saved final weights to {}".format(save_dir + fn))
         return history
 
+    def load_weights(self, weight_path):
+        """
+        Load weights from previous training.
+        """
+        self.vae.load_weights(weight_path)
 
-def load_weights(self, weight_path):
-    """
-    Load weights from previous training.
-    """
-    self.vae.load_weights(weight_path)
-
-
-def predict(self, processed_img):
-    """
-    Take in an preprocessed image file, run through net, and return output.
-    """
-    return self.vae.predict(processed_img)
+    def predict(self, processed_img):
+        """
+        Take in an preprocessed image file, run through net, and return output.
+        """
+        return self.vae.predict(processed_img)
 
 
 def train_all_sigs(sig_type='genuine', epochs=250, frac=0.5, seed=4):
