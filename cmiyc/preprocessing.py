@@ -14,7 +14,7 @@ import viz_utils
 
 
 PATH_SAVE = 'data/clean/'
-PATH_ALL = 'data/clean/train-dutch-offline.pkl'
+PATH_ALL = 'data/clean/train-dutch-offline.pckl'
 PATH_TRAIN_GENUINE = 'data/clean/train-dutch-offline-genuine.npy'
 PATH_TRAIN_FORGERIES = 'data/clean/train-dutch-offline-forgeries.npy'
 
@@ -182,7 +182,6 @@ def batch_preprocess_aug(files_list, dest_file, final_res, padding, aug_size):
     """ Executes the pre-processing pipeline on all images listed in the given
     files list. The dataset of pre-processed images are saved as a numpy array
     to the given destination file.
-
     The source folder should not contain any other files apart from the images
     to pre-process. The folder name should be of the form 'path/to/folder/'.
     """
@@ -241,10 +240,10 @@ def batch_preprocess_aug(files_list, dest_file, final_res, padding, aug_size):
 if __name__ == '__main__':
 
     final_res = 128
-    aug_size = 16
+    aug_size = 32
     padding = True
 
     files = fetch_all_raw()
 
-    # batch_preprocess(files, PATH_ALL, final_res, padding)
-    batch_preprocess_aug(files, PATH_ALL, final_res, padding, aug_size)
+    batch_preprocess(files, PATH_ALL, final_res, padding)
+    # batch_preprocess_aug(files, PATH_ALL, final_res, padding, aug_size)

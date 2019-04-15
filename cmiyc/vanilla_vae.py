@@ -3,13 +3,16 @@ import time
 import pickle
 
 from keras.models import Model
-from keras.layers import Input, Dense, Lambda
-from keras.losses import mse
+from keras.layers import Input, Dense, Lambda, Reshape
+from keras.losses import binary_crossentropy, mse
 from keras.callbacks import ModelCheckpoint
 import keras.backend as K
+from sklearn.model_selection import train_test_split
 
 import dataset_utils
+import data_augmentation
 import viz_utils
+
 
 class VanillaVae():
     SAVE_DIR = 'saved-models/'
@@ -67,21 +70,7 @@ class VanillaVae():
         self.total_loss = K.mean(self.recon_loss + self.kl_loss)
         return self.total_loss
 
-    def load_data(self, sig_id=1, sig_type='genuine'):
-        '''
-        Load the specified sig id and signature type.
-        
-        TODO: again, wasteful to be calling this here.
-        Move to outside loop later.
-        '''
-        x_train, y_train, x_test, y_test = dataset_utils.load_clean_train_test(vae_sig_type=sig_type,
-                                                      sig_id=sig_id,
-                                                      id_as_label=False)
-
-        self.x_train = x_train
-        self.y_train = y_train
-
-    def fit(self, val_split, epochs, batch_size, save_dir=None, fn=None):
+    def fit(self, x_train, val_split, epochs, batch_size, save_dir=None, fn=''):
         """ Train the model and save the weights if a `save_dir` is set.
         """
         if save_dir:
@@ -98,7 +87,7 @@ class VanillaVae():
 
         start = time.time()
 
-        history = self.vae.fit(self.x_train,
+        history = self.vae.fit(x_train,
                      epochs=epochs,
                      batch_size=batch_size,
                      validation_split=val_split,
@@ -115,17 +104,64 @@ class VanillaVae():
             print("Saved final weights to {}".format(save_dir+fn))
         return history
 
-    def load_weights(self, weight_path):
+    def fit_generator(self, train_generator, steps_per_epoch, epochs,
+                      val_generator, val_steps, save_dir=None, fn=''):
+        """ Train the model just like fit but with a data augmentation generator
+        in place of the x_train
         """
-        Load weights from previous training.
-        """
-        self.vae.load_weights(weight_path)
 
-    def predict(self, processed_img):
-        """
-        Take in an preprocessed image file, run through net, and return output.
-        """
-        return self.vae.predict(processed_img)
+        if save_dir:
+            if not os.path.exists(save_dir):
+                os.makedirs(save_dir)
+
+        temp_fn = "incomplete_" + fn
+
+        # Setup checkpoint to save best model
+        callbacks = [
+            ModelCheckpoint(save_dir + temp_fn, monitor='val_loss', verbose=1,
+                            save_best_only=True)
+        ] if save_dir else []
+
+        start = time.time()
+
+        # Internal generator wrapper to reshape the input
+        def vae_generator(generator):
+            for x_batch, y_batch in generator:
+                x_batch = x_batch.reshape(x_batch.shape[0], -1)
+                yield x_batch, None
+
+        history = self.vae.fit_generator(
+            vae_generator(train_generator),
+            steps_per_epoch,
+            epochs,
+            validation_data=vae_generator(val_generator),
+            validation_steps=val_steps,
+            callbacks=callbacks,
+            verbose=1)
+
+        print("Total train time: {0:.2f} sec".format(time.time() - start))
+
+        if save_dir:
+            # Rename to proper filename after all epochs successfully run
+            os.rename(save_dir + temp_fn, save_dir + fn)
+            self.vae.save_weights(save_dir + fn)
+            print("Saved final weights to {}".format(save_dir + fn))
+        return history
+
+
+def load_weights(self, weight_path):
+    """
+    Load weights from previous training.
+    """
+    self.vae.load_weights(weight_path)
+
+
+def predict(self, processed_img):
+    """
+    Take in an preprocessed image file, run through net, and return output.
+    """
+    return self.vae.predict(processed_img)
+
 
 def train_all_sigs(sig_type='genuine', epochs=250, frac=0.5, seed=4):
     '''
@@ -169,7 +205,7 @@ def train_all_sigs(sig_type='genuine', epochs=250, frac=0.5, seed=4):
             image_res, 
             intermediate_dim,
             latent_dim,
-            epochs )
+            epochs)
 
         # Skip this sig_id if the weight file has already been created:
         # Anticipating that this will take a long time to run,
@@ -204,17 +240,20 @@ def train_all_sigs(sig_type='genuine', epochs=250, frac=0.5, seed=4):
 
     return sig_id_list
 
+
 if __name__ == '__main__':
 
     # Parameters
-    sig_id = 1
+    sig_id = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
     sig_type = 'genuine'
     image_res = 128
     intermediate_dim = 512
-    latent_dim = 256
+    latent_dim = 16
     val_frac = 0.1
-    epochs = 100
+    epochs = 50
     batch_size = 32
+    steps_per_epoch = 64
+    val_steps=8
     save_dir = VanillaVae.SAVE_DIR
     fn = 'models_{}_sigid{}_res{}_id{}_ld{}_epoch{}.h5'.format(
             sig_type,
@@ -229,10 +268,25 @@ if __name__ == '__main__':
     vanilla_vae = VanillaVae(image_res*image_res, intermediate_dim, latent_dim)
 
     # Get training data
-    vanilla_vae.load_data(sig_id, sig_type)
+    x_train, y_train, _, _ = dataset_utils.load_clean_train_test(
+        vae_sig_type=sig_type,
+        sig_id=sig_id,
+        id_as_label=False)
+    x_train, x_val, y_train, y_val = train_test_split(
+        x_train, y_train, test_size=val_frac)
+
+    train_gen = data_augmentation.get_datagen().flow(
+        x_train.reshape(-1, image_res, image_res, 1),
+        y_train,
+        batch_size=batch_size)
+    val_gen = data_augmentation.get_datagen().flow(
+        x_val.reshape(-1, image_res, image_res, 1),
+        y_val,
+        batch_size=batch_size)
 
     # Train
-    history = vanilla_vae.fit(val_frac, epochs, batch_size, save_dir, fn)
+    history = vanilla_vae.fit_generator(
+        train_gen, steps_per_epoch, epochs, val_gen, val_steps, save_dir, fn)
 
     # # Plot the losses after training
     # viz_utils.plot_history(history)
@@ -245,7 +299,7 @@ if __name__ == '__main__':
     # viz_utils.plot_encoded_2d(x_encoded, y_train)
     #
     # # Visualize 2D manifolds
-    # viz_utils.plot_manifolds_2d(vanilla_vae.decoder)
-    
+    viz_utils.plot_manifolds_2d(vanilla_vae.decoder, n=5)
+
     # # Plot the original input image
     # viz_utils.plot_original_image(x_train)
