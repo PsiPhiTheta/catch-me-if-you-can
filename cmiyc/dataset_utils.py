@@ -8,7 +8,7 @@ from sklearn.model_selection import train_test_split
 import preprocessing as pre
 
 TYPE_MAP = {'genuine': 1,
-                'forgery': 0}
+            'forgery': 0}
 
 
 def old_load_clean_train(sig_type='all', sig_id='all', id_as_label=False, frac=0.5):
@@ -36,6 +36,7 @@ def old_load_clean_train(sig_type='all', sig_id='all', id_as_label=False, frac=0
 
     labels = 'sig_id' if id_as_label else 'label'
     return np.vstack(df['sig'].to_numpy()), df[labels].to_numpy().astype('int')
+
 
 def load_clean_train_test(vae_sig_type='genuine', sig_id=1, id_as_label='false', frac=0.5, random_state=4):
     '''
@@ -81,7 +82,7 @@ def load_clean_train_test(vae_sig_type='genuine', sig_id=1, id_as_label='false',
     exp_df_test = exp_df_test.sample(frac=1).reset_index(drop=True)
 
     # Unit test to make sure our splits are sound
-    split_test(vae_df_train, exp_df_test, sig_id, vae_sig_type, verbose=False)
+    # split_test(vae_df_train, exp_df_test, sig_id, vae_sig_type, verbose=False)
 
     if id_as_label:
         labels = 'sig_id'
@@ -99,6 +100,7 @@ def load_clean_train_test(vae_sig_type='genuine', sig_id=1, id_as_label='false',
     assert (1 in list(set(y_test)) and 0 in list(set(y_test))), "y_test contains bad values: {}".format(list(set(y_test)))
 
     return x_train, y_train, x_test, y_test
+
 
 def get_sig_ids(sig_type='genuine', mode='all'):
     '''
@@ -144,6 +146,7 @@ def get_sig_ids(sig_type='genuine', mode='all'):
 
     else:
         print('get_train_sig_ids called with invalid mode={}'.format(mode))
+
 
 def split_test(train_split, test_split, sig_id, vae_sig_type, verbose=True):
     '''
@@ -197,6 +200,7 @@ def split_test(train_split, test_split, sig_id, vae_sig_type, verbose=True):
             print("[OK] split_test() passes.")
     else:
         assert test_pass, "[TEST FAILURE] split_test() did not pass."
+
 
 if __name__ == "__main__":
     pass

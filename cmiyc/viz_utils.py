@@ -68,7 +68,7 @@ def plot_manifolds_2d(decoder, n=15, size=128, std_dev=1):
             figure[i * size: (i + 1) * size, j * size: (j + 1) * size] = im
 
     plt.figure()
-    plt.imshow(figure, cmap='jet')
+    plt.imshow(figure, cmap='gray')
     plt.show()
 
 
