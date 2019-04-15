@@ -65,7 +65,7 @@ class SplitReconKL(Callback):
 
 		# Assert that kl + mse = total loss within some error as % of total,
 		# or else we have a problem
-		thresh = 0.0000001
+		thresh = 0.000001
 		assert (mse + kl) - total < thresh * total, "Problem: recorded mse + kl != total loss, check SplitReconKL. ({} + {} != {})".format(mse, kl, total)
 
 		self.total_losses.append(total)
@@ -115,7 +115,7 @@ class SplitReconKL(Callback):
 			x_tick_interval = 5
 		else:
 			x_tick_interval = 10
-			
+
 		plt.xticks(np.arange(min(x), max(x)+1, 1))
 
 		plt.ylabel("Log-Loss")
@@ -370,7 +370,7 @@ def train_all_sigs(sig_type='genuine', epochs=100, frac=0.5, seed=4):
 
 def main():
 	
-	train_all_sigs()
+	train_all_sigs(epochs=2)
 
 
 if __name__ == "__main__":
