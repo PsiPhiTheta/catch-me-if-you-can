@@ -126,8 +126,7 @@ if __name__ == '__main__':
         'batch_size': 32,
         'epochs': 50,
         'save_dir': CustomVae.SAVE_DIR,
-        # 'betas': [0.25, 0.5, 1, 1.25, 1.5, 1.75, 2],
-        'betas': [5, 10, 15, 20],
+        'betas': [0.25, 0.5, 1, 1.25, 1.5, 1.75, 2, 5, 10, 15, 20] # dunno which ones you did your viz on so I'll do them all here
     }
 
     train_beta_models_w_loss_viz(args)
