@@ -39,6 +39,7 @@ import time
 import dataset_utils
 import viz_utils
 from vanilla_vae import VanillaVae
+from plot_from_npy import plot_data
 
 class SplitReconKL(Callback):
 	'''
@@ -109,36 +110,10 @@ class SplitReconKL(Callback):
 
 		# Save a stacked chart of the loss breakdown over time
 
-		# Generate a x spanning the number of epochs
-		epoch_n = data.shape[1]
-		x = np.linspace(1, epoch_n, epoch_n)
-		y1 = data[0,:] # total
-		y2 = data[1,:] # recon
-		y3 = data[2,:] # KL
-		
-		plt.figure(figsize=(10,8))
-		plt.stackplot(x, y2, y3, labels=['Reconstruction term','KL term'])
-		
-		plt.title("Training log-loss: Reconstruction vs KL term breakdown")
-		plt.xlabel("Epoch")
-		if epoch_n < 20:
-			x_tick_interval = 1
-		elif epoch_n <= 100:
-			x_tick_interval = 5
-		else:
-			x_tick_interval = 10
+		save_dir = SplitReconKL.SAVE_DIR
+		save_fn = self.imgfn
 
-		plt.xticks(np.arange(min(x), max(x)+1, 1))
-
-		plt.ylabel("Log-Loss")
-		plt.yscale("log")
-
-		plt.legend(loc='upper left')
-		if save_img:
-			plt.savefig(SplitReconKL.SAVE_DIR+self.imgfn)
-			print("Saved {}".format(SplitReconKL.SAVE_DIR+self.imgfn))
-		else:
-			plt.show()
+		plot_data(data, save_dir, save_fn)
 
 class CustomVae(VanillaVae):
 	'''
@@ -322,7 +297,7 @@ def train_all_sigs(sig_type='genuine', epochs=100, frac=0.5, seed=4):
 		'val_steps': 8,
 		'save_dir': CustomVae.SAVE_DIR,
 		'recon_type': 'mse', # mse or xent
-		'beta': 1.0
+		'beta': 0.001
 		}
 
 		args['fn'] = 'alt_models_{}_sigid{}_res{}_id{}_ld{}_epoch{}_{}_b{}.h5'.format(
@@ -351,6 +326,7 @@ def train_all_sigs(sig_type='genuine', epochs=100, frac=0.5, seed=4):
 			args['latent_dim'],
 			args['fn'],
 			args['recon_type'])
+		custom_vae.set_beta(args['beta'])
 
 		train_gen, val_gen = custom_vae.get_gens(
 			args['sig_type'], 
@@ -389,8 +365,11 @@ def train_all_sigs(sig_type='genuine', epochs=100, frac=0.5, seed=4):
 
 def main():
 	
+	###################
+	# Train on every sig, generate graphs. Pop on over to plot_from_npy.py
+	# to get a vis that averages all the generated npy files 
+	###################
 	train_all_sigs(epochs=100)
-
 
 if __name__ == "__main__":
 	main()
