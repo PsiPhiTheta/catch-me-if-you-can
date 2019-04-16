@@ -3,7 +3,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-def plot_data(data, save_dir, save_fn, title=None):
+def plot_data(data, save_dir, save_fn, save_img=True, 
+		title=None, xlabel=None, ylabel=None, yscale=None):
 	# Generate a x spanning the number of epochs
 		epoch_n = data.shape[1]
 		x = np.linspace(1, epoch_n, epoch_n)
@@ -19,7 +20,6 @@ def plot_data(data, save_dir, save_fn, title=None):
 		else:
 			plt.title("Training log-loss: Reconstruction vs KL term breakdown")
 		
-		plt.xlabel("Epoch")
 		if epoch_n < 20:
 			x_tick_interval = 1
 		elif epoch_n <= 100:
@@ -29,13 +29,25 @@ def plot_data(data, save_dir, save_fn, title=None):
 
 		plt.xticks(np.arange(min(x), max(x)+1, x_tick_interval))
 
-		plt.ylabel("Log-Loss")
-		plt.yscale("log")
+		if xlabel:
+			plt.xlabel(ylabel)
+		else:
+			plt.xlabel("Epoch")
+
+		if ylabel:
+			plt.ylabel(ylabel)
+		else:
+			plt.ylabel("Log-Loss")
+		
+		if yscale:
+			plt.yscale(yscale)
+		else:
+			plt.yscale("log")
 
 		plt.legend(loc='upper left')
 		if save_img:
-			plt.savefig(saved_dir+save_fn)
-			print("Saved {}".format(saved_dir+save_fn))
+			plt.savefig(save_dir+save_fn)
+			print("Saved {}".format(save_dir+save_fn))
 		else:
 			plt.show()
 
@@ -58,11 +70,11 @@ def plot_from_npy():
 		if os.path.isfile(fp):
 			data = np.load(fp)
 
-			# Convert values of col 1 and 2 to percentage of col 0,
-			# to normalize for different loss scales on different sigs
-			data[0] /= data[0]
-			data[1] /= data[0]
-			data[2] /= data[0] 
+			# # Convert values of col 1 and 2 to percentage of col 0,
+			# # to normalize for different loss scales on different sigs
+			# data[0] /= data[0]
+			# data[1] /= data[0]
+			# data[2] /= data[0] 
 
 			data_list.append(data)
 			print("File found for sig_id={}, shape is {}".format(sig_id, data.shape))
@@ -75,6 +87,14 @@ def plot_from_npy():
 	# Take mean down the first axis
 	mean_data = np.mean(all_data, axis=0)
 	print(mean_data.shape)
+
+	plot_data(
+		mean_data, 
+		'./saved-models/loss_splits/', 
+		'mean_of_all_sig.png', 
+		save_img=True, 
+		title="Training log-loss: Reconstruction vs KL term breakdown, average over all signatures",
+		ylabel="Log-loss attributed to term, stacked area")
 
 def main():
 

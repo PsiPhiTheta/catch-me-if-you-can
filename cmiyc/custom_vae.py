@@ -297,7 +297,7 @@ def train_all_sigs(sig_type='genuine', epochs=100, frac=0.5, seed=4):
 		'val_steps': 8,
 		'save_dir': CustomVae.SAVE_DIR,
 		'recon_type': 'mse', # mse or xent
-		'beta': 1.0
+		'beta': 0.001
 		}
 
 		args['fn'] = 'alt_models_{}_sigid{}_res{}_id{}_ld{}_epoch{}_{}_b{}.h5'.format(
