@@ -391,14 +391,10 @@ def train_all_sigs(sig_type='genuine', epochs=100, frac=0.5, seed=4):
 def main():
 	
 	###################
-	# Train on every sig, generate graphs
+	# Train on every sig, generate graphs. Pop on over to plot_from_npy.py
+	# to get a vis that averages all the generated npy files 
 	###################
 	train_all_sigs(epochs=100)
-
-	###################
-	# Make combined graph from .npy files spit out by previous fxn
-	###################
-
 
 if __name__ == "__main__":
 	main()
