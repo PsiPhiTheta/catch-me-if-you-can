@@ -128,7 +128,7 @@ class SplitReconKL(Callback):
 		else:
 			x_tick_interval = 10
 
-		plt.xticks(np.arange(min(x), max(x)+1, 1))
+		plt.xticks(np.arange(min(x), max(x)+1, x_tick_interval))
 
 		plt.ylabel("Log-Loss")
 		plt.yscale("log")
@@ -390,7 +390,14 @@ def train_all_sigs(sig_type='genuine', epochs=100, frac=0.5, seed=4):
 
 def main():
 	
+	###################
+	# Train on every sig, generate graphs
+	###################
 	train_all_sigs(epochs=100)
+
+	###################
+	# Make combined graph from .npy files spit out by previous fxn
+	###################
 
 
 if __name__ == "__main__":
