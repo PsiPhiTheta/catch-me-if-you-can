@@ -109,7 +109,13 @@ class SplitReconKL(Callback):
 
 		# Save a stacked chart of the loss breakdown over time
 
-		# Generate a x spanning the number of epochs
+		save_dir = SplitReconKL.SAVE_DIR
+		save_fn = self.imgfn
+
+		plot_data(data, save_dir, save_fn)
+
+def plot_data(data, save_dir, save_fn, title=None):
+	# Generate a x spanning the number of epochs
 		epoch_n = data.shape[1]
 		x = np.linspace(1, epoch_n, epoch_n)
 		y1 = data[0,:] # total
@@ -119,7 +125,11 @@ class SplitReconKL(Callback):
 		plt.figure(figsize=(10,8))
 		plt.stackplot(x, y2, y3, labels=['Reconstruction term','KL term'])
 		
-		plt.title("Training log-loss: Reconstruction vs KL term breakdown")
+		if title:
+			plt.title(title)
+		else:
+			plt.title("Training log-loss: Reconstruction vs KL term breakdown")
+		
 		plt.xlabel("Epoch")
 		if epoch_n < 20:
 			x_tick_interval = 1
@@ -135,8 +145,8 @@ class SplitReconKL(Callback):
 
 		plt.legend(loc='upper left')
 		if save_img:
-			plt.savefig(SplitReconKL.SAVE_DIR+self.imgfn)
-			print("Saved {}".format(SplitReconKL.SAVE_DIR+self.imgfn))
+			plt.savefig(saved_dir+save_fn)
+			print("Saved {}".format(saved_dir+save_fn))
 		else:
 			plt.show()
 
