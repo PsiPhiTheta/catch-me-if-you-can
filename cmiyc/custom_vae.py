@@ -382,7 +382,7 @@ def train_all_sigs(sig_type='genuine', epochs=100, frac=0.5, seed=4):
 
 def main():
 	
-	train_all_sigs(epochs=2)
+	train_all_sigs(epochs=100)
 
 
 if __name__ == "__main__":
