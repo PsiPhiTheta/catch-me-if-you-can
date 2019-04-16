@@ -318,6 +318,8 @@ def train_all_sigs(sig_type='genuine', epochs=100, frac=0.5, seed=4):
 		'val_frac': 0.1,
 		'epochs': 100,
 		'batch_size': 32,
+		'steps_per_epoch': 64,
+		'val_steps': 8,
 		'save_dir': CustomVae.SAVE_DIR,
 		'recon_type': 'mse', # mse or xent
 		'beta': 1.0
@@ -350,17 +352,22 @@ def train_all_sigs(sig_type='genuine', epochs=100, frac=0.5, seed=4):
 			args['fn'],
 			args['recon_type'])
 
-		# Get training data
-		custom_vae.load_data(args['sig_id'], args['sig_type'])
+		train_gen, val_gen = custom_vae.get_gens(
+			args['sig_type'], 
+			args['sig_id'], 
+			args['val_frac'], 
+			args['image_res'], 
+			args['batch_size'])
 
 		# Train
-		history = custom_vae.fit(
-			args['val_frac'], 
+		history = custom_vae.fit_generator(
+			train_gen, 
+			args['steps_per_epoch'], 
 			args['epochs'], 
-			args['batch_size'], 
+			val_gen, 
+			args['val_steps'], 
 			args['save_dir'], 
-			args['fn']
-		)
+			args['fn'])
 
 		# Write history to pickle in case we want it later
 		hist_pickle_filename = 'hist_alt_models_{}_sigid{}_res{}_id{}_ld{}_epoch{}_{}_b{}.h5'.format(
