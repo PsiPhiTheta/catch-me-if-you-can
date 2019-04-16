@@ -351,6 +351,7 @@ def train_all_sigs(sig_type='genuine', epochs=100, frac=0.5, seed=4):
 			args['latent_dim'],
 			args['fn'],
 			args['recon_type'])
+		custom_vae.set_beta(args['beta'])
 
 		train_gen, val_gen = custom_vae.get_gens(
 			args['sig_type'], 
