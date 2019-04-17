@@ -195,6 +195,91 @@ class Experiment():
 
         print('Successfully wrote file to {}'.format(file))
 
+    @staticmethod
+    def all_one_go_experiments():
+        '''
+        A rewrite of the stuff under __main__
+        '''
+
+        if not os.path.exists('exp_outputs/pickle/'):
+            os.makedirs('exp_outputs/pickle/')
+
+        average_acc = []
+        average_rec = []
+        average_F1 = []
+        total_average_acc = 0
+        total_average_rec = 0
+        total_average_F1 = 0
+        filename = 'exp_outputs/pickle/vars'
+
+        MAX_SIG = 70 # sigs end at 69
+
+        for i in range(1, MAX_SIG):
+            # Check if the weight file exists. 
+            # Sigs were not numbered in continuous order
+
+            candidate_weight = 'saved-models/alt_models_genuine_sigid{}_res128_id512_ld256_epoch100_mse_b0_001.h5'.format(i)
+            if not os.path.exists(candidate_weight):
+                continue # file DNE; skip this i
+
+            print("="*20)
+            print("i = {}, loading file {}".format(i, candidate_weight))
+            print("="*20)
+
+            args = {
+                'classifier': 'forest',
+                'sig_id':     i,
+                'trained_on': 'genuine',
+                'image_res':  128,
+                'intermediate_dim': 512,
+                'latent_dim': 256,
+                'save_dir': candidate_weight,
+                'print_output': True
+            }
+
+            exp1 = Experiment(args)
+            average_acc.append(exp1.acc)
+            average_rec.append(exp1.recal)
+            average_F1.append(exp1.F1)
+
+            args = {
+                'classifier': 'knn',
+                'sig_id': i,
+                'trained_on': 'genuine',
+                'image_res': 128,
+                'intermediate_dim': 512,
+                'latent_dim': 256,
+                'save_dir': candidate_weight,
+                'print_output': True
+            }
+
+            exp2 = Experiment(args)
+            average_acc.append(exp2.acc)
+            average_rec.append(exp2.recal)
+            average_F1.append(exp2.F1)
+
+            # plt.clf()
+            if not os.path.exists(Experiment.IMG_DIR):
+                os.makedirs(Experiment.IMG_DIR)
+            
+            figname = 'alt_sig_id_{}.png'.format(args['sig_id'])
+            plt.savefig(Experiment.IMG_DIR+figname)
+
+        total_average_acc = sum(average_acc)/len(average_acc)
+        total_average_rec = sum(average_rec)/len(average_rec)
+        total_average_F1 = sum(average_F1)/len(average_F1)
+
+        print('The average accuracy is:', total_average_acc)
+        print('The average recall is:', total_average_rec)
+        print('The average F1 score is:', total_average_F1)
+
+        with open(filename, 'wb') as f:
+                pickle.dump([average_acc,
+                             average_rec,
+                             average_F1,
+                             total_average_acc,
+                             total_average_rec,
+                             total_average_F1], f)
 
 if __name__ == '__main__':
 
@@ -206,7 +291,7 @@ if __name__ == '__main__':
     total_average_F1 = 0
     filename = 'exp_outputs/pickle/vars'
 
-    # should loop through all sigs avoiding missing ones
+    # should loop through all sigs, avoiding missing ones
 
     for i in range(1,5):
 
@@ -411,3 +496,5 @@ if __name__ == '__main__':
     # to load
     with open(filename, 'rb') as f:
         average_acc, average_rec, average_F1, total_average_acc, total_average_rec, total_average_F1 = pickle.load(f)
+
+    # Experiment.all_one_go_experiments()
