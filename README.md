@@ -1,5 +1,5 @@
 # catch-me-if-you-can
-An ML project exploring alternative approaches to signature verification.
+An ML project exploring alternative approaches to signature verification. Read the full paper [here](https://github.com/PsiPhiTheta/catch-me-if-you-can/blob/master/paper.pdf).
 
 ## Setup
 Using Conda, you can create and activate the Python environment like so:
